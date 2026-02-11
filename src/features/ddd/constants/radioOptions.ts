@@ -1,0 +1,23 @@
+// 圖書服務部 (DDD) - 單選按鈕選項
+export const radioOptions: { [key: string]: { value: string, label: string }[] } = {
+    'basicInfo.contractStatus': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'basicInfo.earlyTermination': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'accountingInfo.locationType': [{ value: 'domestic', label: '國內單位' }, { value: 'international', label: '國外單位' }],
+    'basicInfo.thereafter': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'scopeInfo.b2bSalesRightsToggle': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }, { value: 'by_title', label: 'by title' }],
+    'scopeInfo.b2bRoyaltyAdjustment': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'scopeInfo.b2bPricingPower': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'scopeInfo.subscription': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'scopeInfo.eLibrarySalesRight': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'otherClauses.b2cSalesRightsToggle': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }, { value: 'by_title', label: 'by title' }],
+    'otherClauses.b2cRoyaltyAdjustment': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'otherClauses.b2cPricingPower': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'otherClauses.trmsSalesRightsToggle': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }, { value: 'by_title', label: 'by title' }],
+    'otherClauses.distributorPlatformToggle': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }, { value: 'by_title', label: 'by title' }],
+    'twBookRights.exclusiveAuthorization': [{ value: 'exclusive', label: '專屬' }, { value: 'non_exclusive', label: '非專屬' }],
+    'twBookRights.fullTextDigitizationTwBook': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'twBookAccounting.twBookPaymentMethod': [{ value: 'remittance', label: '匯款' }, { value: 'check', label: '支票' }, { value: 'other', label: '其他' }],
+    'twBookAccounting.twBookPayeeInfo': [{ value: 'remittance', label: '銀行' }, { value: 'check', label: '郵局' }, { value: 'prepayment', label: '預付款' }],
+    'twBookLogistics.subDistribution': [{ value: 'yes', label: '是' }, { value: 'no', label: '否' }],
+    'twBookContact.publisherRegion': [{ value: 'domestic', label: '國內' }, { value: 'overseas', label: '海外' }],
+};

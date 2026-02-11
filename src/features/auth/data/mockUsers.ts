@@ -1,0 +1,9 @@
+import type { User } from '../types';
+
+
+export const sampleUsers: User[] = [
+    { id: 'user-1', name: '王大明 (Admin)', employeeId: '12345', email: 'wang.da.ming@example.com', department: '學術發展部', permissions: { adminOnly: true, createMaintain: true, searchExport: true, downloadTemplate: true, maintainTemplate: true, maintainParams: '學術發展部', landingPage: '學術發展部' }, notificationSettings: { enabled: true, reportScopeMonths: 6, reportFrequency: 'monthly', selectedTeamMembers: ['user-1'] }, managerId: null, password: '0000' },
+    { id: 'user-2', name: '林美英', employeeId: '67890', email: 'lin.mei.ying@example.com', department: '圖書服務部', permissions: { adminOnly: false, createMaintain: false, searchExport: true, downloadTemplate: true, maintainTemplate: false, maintainParams: '不開放', landingPage: '圖書服務部' }, notificationSettings: { enabled: true, reportScopeMonths: 3, reportFrequency: 'quarterly', selectedTeamMembers: ['user-2'] }, managerId: 'user-4', password: 'password123' },
+    { id: 'user-3', name: '陳小華', employeeId: '54321', email: 'chen.xiao.hua@example.com', department: '學術發展部', permissions: { adminOnly: false, createMaintain: true, searchExport: true, downloadTemplate: true, maintainTemplate: false, maintainParams: '不開放', landingPage: '學術發展部' }, notificationSettings: { enabled: false, reportScopeMonths: 3, reportFrequency: 'monthly', selectedTeamMembers: ['user-3'] }, managerId: 'user-4', password: 'password123' },
+    { id: 'user-4', name: '張主管', employeeId: '99999', email: 'manager.chang@example.com', department: '所有部門', permissions: { adminOnly: false, createMaintain: false, searchExport: true, downloadTemplate: true, maintainTemplate: false, maintainParams: '不開放', landingPage: '學術發展部' }, notificationSettings: { enabled: true, reportScopeMonths: 12, reportFrequency: 'bimonthly', selectedTeamMembers: ['user-3'] }, managerId: null, password: 'password123' },
+];

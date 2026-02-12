@@ -1,4 +1,46 @@
-﻿# 2026-02-11 (下午) Git 重置
+﻿# 2026-02-12 權限管理對話框 UI 統一優化
+
+## 摘要
+將「權限管理」模組中的「建立新使用者」、「編輯使用者權限」及「刪除確認」彈出視窗，從手刻 inline HTML 重構為使用共用 `Modal` + `Button` 元件，與「範本管理 → 上傳新範本」視窗樣式完全一致。
+
+## 詳細變更內容
+
+### [修改] `src/features/settings/components/UserManagement.tsx`
+
+1. **新增 import**
+   - `import { Button } from '@/components/ui/Button';`
+   - `import { Modal } from '@/components/ui/Modal';`
+
+2. **頁面頂部「建立新使用者」按鈕**
+   - 從 `<button className="px-4 py-2 bg-indigo-600 ...">` 改為 `<Button>` 元件
+   - 自動獲得統一的 hover shadow、active scale 動畫效果
+
+3. **建立/編輯使用者彈出視窗 (原 Lines 158-205)**
+   - 從 `<div className="fixed inset-0 bg-black bg-opacity-50 ...">` 手刻 modal 改為 `<Modal>` 元件
+   - 新增功能：backdrop-blur 背景模糊、ESC 鍵關閉、標題列 X 關閉按鈕、hover 半透明效果
+   - Footer 按鈕（取消/儲存設定）改用 `<Button variant="secondary">` 和 `<Button variant="primary">`
+   - 使用 `size="xl"` 匹配原有 max-w-2xl 寬度
+
+4. **刪除確認彈出視窗 (原 Lines 207-225)**
+   - 從手刻確認對話框改為 `<Modal size="sm">` 元件
+   - 「確認刪除」按鈕改用 `<Button variant="danger">`，統一紅色 hover/active 動畫
+   - 「取消」按鈕改用 `<Button variant="secondary">`
+   - 保留 AlertTriangle 警告圖示
+
+5. **系統權限設定勾選選項樣式升級**
+   - 從 plain HTML checkbox + 灰底 hover 改為 **toggle switch**（滑動開關）
+   - 樣式與「通知設定」模組的啟用/停用開關完全一致（indigo 主題色）
+   - 改為單欄垂直排列（原為 2x3 grid），每項包含名稱 + 說明文字
+   - 新增 hover 效果：border 變為 indigo、背景淡紫色
+   - 點擊整行即可切換，不限於開關本身
+
+## 測試結果
+- ✅ TypeScript 編譯: 成功,無錯誤
+- ✅ UI 一致性: 與範本管理的上傳新範本視窗樣式完全一致
+
+---
+
+# 2026-02-11 (下午) Git 重置
 
 ## 變更內容
 - **移除舊的 .git 目錄:** 使用 `Remove-Item -Recurse -Force .git` 移除整個舊的 Git 歷史紀錄

@@ -22,6 +22,7 @@ interface FormFieldConfig {
     fields?: FormFieldConfig[]; // For grouped fields
     condition?: (formData: any) => boolean;
     component?: React.FC<any>;
+    isReadOnly?: boolean;
 }
 
 // --- Helper to convert section ID to data key ---
@@ -66,7 +67,7 @@ export const fieldConfig: { [sectionId: string]: FormFieldConfig[] } = {
         { id: 'nonAiritiVersion', label: '非華藝版本號', type: 'text', fullWidth: true },
     ],
     'basic-info': [
-        { id: 'contractParty', label: '簽約單位', type: 'text', fullWidth: true },
+        { id: 'contractParty', label: '簽約單位', type: 'tags', fullWidth: true, placeholder: '新增單位後按 Enter...' },
         { id: 'partyARep', label: '甲方簽約代表', type: 'text' },
         { id: 'partyBRep', label: '乙方簽約代表', type: 'text' },
         { id: 'contractStartDate', label: '合約起日', type: 'date' },
@@ -106,14 +107,15 @@ export const fieldConfig: { [sectionId: string]: FormFieldConfig[] } = {
         { id: 'damages', label: '損害賠償', type: 'custom', component: DamagesField, fullWidth: true },
     ],
     'remittance-info': [
-        { id: 'accountType', label: '國內/外帳戶', type: 'radio', options: ['國內', '海外'] },
+        { id: 'beneficiary', label: '分潤主體', type: 'text', fullWidth: true, isReadOnly: true },
+        { id: 'accountType', label: '帳戶類別', type: 'radio', options: ['國內', '海外'] },
         { id: 'accountName', label: '戶名', type: 'text' },
         { id: 'checkTitle', label: '支票抬頭', type: 'text' },
         { id: 'currency', label: '幣別', type: 'text' },
         { id: 'bankName', label: '銀行名稱', type: 'text' },
         { id: 'branchName', label: '分行名稱', type: 'text' },
         { id: 'accountNumber', label: '帳號', type: 'text' },
-        { id: 'accountNotes', label: '帳號密碼_帳戶備註', type: 'text' },
+        { id: 'accountNotes', label: '帳號密碼_帳戶備註', type: 'text', fullWidth: true },
         { id: 'taxId', label: '統一編號', type: 'text' },
         { id: 'idNumber', label: '身份證字號', type: 'text' },
         { id: 'royaltySettlementMonth', label: '權利金_明定結算月份', type: 'text' },

@@ -1,4 +1,93 @@
-﻿# 2026-02-12 權限管理對話框 UI 統一優化
+﻿# 2026-02-12 學發部合約模組 — UI 微調 (第二批)
+
+## 變更內容
+
+### [修改] `src/features/academic/components/RoyaltyModal.tsx`
+- **移除分潤比例未滿 100% 的警告提示**：刪除 `percentageWarnings` useMemo 與相關 JSX
+- 移除未使用的 import：`useMemo`、`AlertCircle`
+
+### [修改] `src/features/academic/constants/fieldConfig.ts`
+- 統一匯款欄位 label 以符合使用者規格：
+  - `帳戶類別` radio 選項 `國外` → `海外`
+  - `銀行帳號` → `帳號`
+  - `帳務備註` (textarea) → `帳號密碼_帳戶備註` (text)
+  - `身分證字號` → `身份證字號`
+  - `版稅結算月份` → `權利金_明定結算月份`
+  - `收付款流程` → `權利金_先給錢_後給收據`
+
+### [修改] `src/features/academic/constants/contractFields.ts`
+- 新增 `beneficiary` (分潤主體) readonly 欄位
+- `國內/外帳戶` → `帳戶類別`
+- `accountNotes` 新增 `fullWidth: true`
+- 新增 `isReadOnly` 至本地 `FormFieldConfig` 介面
+
+### 驗證時機確認
+未填寫驗證提示原本就只在使用者點擊「儲存合約」按鈕時才觸發（`handleSubmit` → `handleValidation()`），無需修改 ✅
+
+## 測試結果
+- ✅ Build: 成功完成 (6.72 秒)
+
+---
+
+
+
+## 摘要
+針對學發部新增合約的三大核心欄位（簽約單位、編輯權利金比例、匯款資料），補齊缺漏的 UI 功能並將內嵌程式碼重構為獨立元件，提升可維護性。
+
+## 詳細變更內容
+
+### [修改] `src/components/ui/Modal.tsx`
+- **新增 `full` 尺寸選項**：`max-w-5xl`，供權利金 Modal 等需要較大空間的場景使用
+- `size` prop 類型更新：`'sm' | 'md' | 'lg' | 'xl'` → `'sm' | 'md' | 'lg' | 'xl' | 'full'`
+
+### [新增] `src/features/academic/components/RoyaltyModal.tsx`
+從 `AcademicContract.tsx` 抽取約 100 行權利金 Modal 內嵌程式碼為獨立元件，新增功能：
+1. **卷期格式自動同步**：修改起始卷期的格式（卷/期、年/月、文字描述）時，自動同步至結束卷期
+2. **三層視覺差異化**：
+   - 日期方案 (DateScheme)：紫色邊框卡片，含摺疊/展開功能
+   - 卷期規則 (VolumeRule)：白色內嵌卡片，附小圓點指示
+   - 分潤明細 (RoyaltySplit)：表格式排版（分潤主體 + 比例列）
+3. **分潤比例合計驗證**：每組 VolumeRule 下的分潤比例加總 ≠ 100% 時，顯示琥珀色警告 badge
+4. **可摺疊日期方案**：點擊標題列摺疊/展開，摺疊時顯示日期摘要
+5. **使用 `size="full"` Modal**：提供 `max-w-5xl` 的充足空間
+6. **保留 datalist 連動**：分潤主體欄位自動顯示簽約單位作為建議
+
+### [新增] `src/features/academic/components/RemittanceSection.tsx`
+從 `AcademicContract.tsx` 抽取匯款區塊為獨立元件，新增功能：
+1. **空狀態引導**：無匯款資料時顯示錢包 icon + 說明文字 + 操作建議
+2. **可摺疊受款人卡片**：每張卡片預設摺疊，僅顯示受款人名稱 + 帳戶類型 + 完成度 badge
+3. **帳戶資料完成度 badge**：
+   - 綠色「資料完整」：銀行名稱、帳號、戶名、幣別四欄已填
+   - 琥珀色「X/4 已填寫」：尚有未填欄位
+4. **全部展開/摺疊按鈕**：右上角快速操作
+5. **內建 RemittanceFormField**：簡化版表單欄位渲染，支援 text、radio、textarea
+
+### [修改] `src/features/academic/components/index.ts`
+- 新增 `RoyaltyModal` 和 `RemittanceSection` 的 export
+
+### [修改] `src/pages/AcademicContract.tsx`
+- **移除約 200 行內嵌程式碼**：
+  - 移除 `getInitialRoyaltySplit`、`getInitialVolumeRule` helper functions
+  - 移除 `tempRoyaltyInfo` state 和所有 royalty CRUD 函數
+  - 移除 `renderRoyaltyVolumeInputsForModal` 函數
+  - 移除內嵌 `<Modal>` 權利金 JSX（約 90 行）
+  - 移除內嵌匯款區塊 JSX（約 30 行）
+- **引入新元件**：`<RoyaltyModal>` 和 `<RemittanceSection>`
+- **新增權利金摘要**：權利金區塊顯示「已設定 X 個日期方案，共 Y 組卷期規則」
+- **移除未使用的 import**：`Plus`, `Trash2`, `Modal`, `RoyaltySplit`, `VolumeRule`
+
+### [修改] `src/features/academic/constants/contractFields.ts`
+- 修正 `contractParty` 欄位定義：`type: 'text'` → `type: 'tags'`
+- 新增 `placeholder: '新增單位後按 Enter...'`
+- 與 `fieldConfig.ts` 保持一致
+
+## 測試結果
+- ✅ TypeScript 編譯: 成功，零錯誤
+- ✅ Build 建置: 成功完成 (10.01 秒)
+
+---
+
+
 
 ## 摘要
 將「權限管理」模組中的「建立新使用者」、「編輯使用者權限」及「刪除確認」彈出視窗，從手刻 inline HTML 重構為使用共用 `Modal` + `Button` 元件，與「範本管理 → 上傳新範本」視窗樣式完全一致。
@@ -395,33 +484,3 @@ Exit code: 0
 ### 程式碼變更
 -   **[MODIFY]** `src/features/academic/constants/fieldConfig.ts`: 更新欄位定義。
 -   **[MODIFY]** `.github/workflows/deploy.yml`: 修正 YAML 縮排。
-
-# 2026-01-20 變更紀錄
-# 2026-02-11 (下�?) Git Repo ?�置?�代碼修�?
-
-## ?��?
-完�? Git Repository ?��?置工作�?�?��了�??��??�步?��??��??��??��?殘�???`TuFuContract.tsx` ?�件，並修復了相?��?導入路�??��??�命?��?確�?�?��庫�??��??��??�性�?
-
-## 詳細變更?�容
-
-### 1. Git Repository ?�置
-- **移除??.git:** 強制移除?��??�卡住�???`.git` ?��???
-- **?�新?��???** ?��? `git init` ?�新?��???repository??
-- **?��??�交:** 將�??�當?��?件�??�並?��? `git commit -m "Initial commit"`，建立全?��??�本起�???
-
-### 2. 檔�?清�??�路徑修�?
-- **移除?��?:** 確�? `src/pages/TuFuContract.tsx` 已被移除，由 `src/pages/DDDContract.tsx` ?�代??
-- **路由?�新:** 驗�? `App.tsx` 中�?路由?�置，確�?`DDDContract` ??`DDDMaintainContract` �?��對�? `/ddd/*` 路�???
-
-### 3. �?��?��??�修�?
-- **導入路�?修正:** ??`DDDContract.tsx` ??`DDDMaintainContract.tsx` 中�?將�??��? `@/features/tufu/*` 導入路�??�新??`@/features/ddd/*`??
-- **變�??��?統�?:**
-    - `src/features/ddd/constants/tocSections.ts`: 將�??��???`tuFuTocSections` ?�命?�為 `dddTocSections`??
-    - `src/pages/DDDContract.tsx` & `src/pages/DDDMaintainContract.tsx`: ?�步?�新引用，�? `tuFuTocSections` ?��???`dddTocSections`??
-
-## 測試結�?
-- **編譯檢查:** 確�??�?�修?��??��?件無 TypeScript 編譯?�誤（�??�路徑錯誤已�?��）�?
-- **路由檢查:** 路由?�置�?��?��??��? DDD 組件??
-
-## 後�?行�?
-- 準�?將代碼推?�到?��? GitHub Repository（�?待使?�者�?�?URL）�?

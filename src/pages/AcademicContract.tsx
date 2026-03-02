@@ -10,13 +10,13 @@ import { validationRules } from '@/features/academic/constants/validationRules';
 import { fieldKeyToNameMap } from '@/features/academic/constants/contractFields';
 
 // 引入型別
-import type { ContractData, DateScheme, RemittanceInfoItem, VolumeIdentifier, FormFieldConfig } from '@/features/academic/types';
+import type { ContractData, DateScheme, RemittanceInfoItem, VolumeIdentifier, FormFieldConfig, PersonalAuthRoyaltyScheme } from '@/features/academic/types';
 // 引入自定義 Hook
 import { useContractForm } from '@/shared/hooks';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
 import { ValidationWarningPanel } from '@/components/common';
 // 引入學發部專用元件
-import { RoyaltyModal, RemittanceSection } from '@/features/academic/components';
+import { RoyaltyModal, RemittanceSection, PersonalAuthRoyaltyModal } from '@/features/academic/components';
 
 
 // --- 1. 輔助函式與初始資料 (Helper Functions & Initial Data) ---
@@ -63,7 +63,18 @@ const getInitialFormData = (): ContractData => {
         royaltyInfo: [getInitialDateScheme()],
         remittanceInfo: [],
         remarks: '',
-        scanFile: null
+        scanFile: null,
+        // 個人授權專用欄位初始化
+        personalAuthInfo: {
+            publicationId: '', type: '個人授權', contractNo: '', journalName: '', volumeIssue: '', articleTitle: '',
+            authorizationDate: '', authorizationStatus: '', authorizationRegion: '', royaltyUid: '',
+            authorName: '', paRemarks: '', email: '', phone: '', address: '', docid: '',
+        },
+        personalAuthRoyaltyInfo: [{
+            id: `pars-${Date.now()}-${Math.random()}`,
+            startDate: '', endDate: '',
+            royaltySplits: [{ id: `rs-${Date.now()}-${Math.random()}`, beneficiary: '', percentage: '' }],
+        }],
     };
 };
 
@@ -183,6 +194,20 @@ const AcademicContract: React.FC = () => {
     const mainContentRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // 個人授權權利金 Modal 狀態
+    const [isPaRoyaltyModalOpen, setIsPaRoyaltyModalOpen] = useState(false);
+
+    // 依合約類型過濾 TOC 章節（參照 DDDContract.tsx 的條件渲染模式）
+    const contractType = formData.contractTarget.type;
+    const isPersonalAuth = contractType === '個人授權';
+    const journalSections = ['registration-info', 'termination-info', 'basic-info', 'rights-info', 'royalty-info', 'scope-info', 'other-clauses', 'remittance-info'];
+    const paSections = ['pa-registration-info', 'pa-rights-info', 'pa-royalty-info', 'pa-other-info'];
+    const visibleTocSections = tocSections.filter(section => {
+        if (isPersonalAuth && journalSections.includes(section.id)) return false;
+        if (!isPersonalAuth && paSections.includes(section.id)) return false;
+        return true;
+    });
+
     // 日期連動邏輯
     useEffect(() => {
         const { contractStartDate, contractEndDate } = formData.basicInfo;
@@ -300,10 +325,17 @@ const AcademicContract: React.FC = () => {
         showMessage('匯款資料已移除。');
     };
 
+    // 個人授權權利金 Modal 操作
+    const openPaRoyaltyModal = () => setIsPaRoyaltyModalOpen(true);
+    const closePaRoyaltyModal = () => setIsPaRoyaltyModalOpen(false);
+    const savePaRoyaltyChanges = (data: PersonalAuthRoyaltyScheme[]) => {
+        setFormData(prev => ({ ...prev, personalAuthRoyaltyInfo: data }));
+    };
+
     // --- JSX Render ---
     return (
         <div className="relative">
-            <FloatingTOC onJump={handleTocJump} sections={tocSections} />
+            <FloatingTOC onJump={handleTocJump} sections={visibleTocSections} />
 
             <div ref={mainContentRef} className="max-w-7xl mx-auto">
                 {/* Header & Import Section */}
@@ -338,15 +370,15 @@ const AcademicContract: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8 pb-20">
-                    {tocSections.map(section => {
-                        const dataKey = section.id.replace(/-(\w)/g, (_, c) => c.toUpperCase()) as keyof ContractData;
+                    {visibleTocSections.map(section => {
+                        const dataKey = section.id.startsWith('pa-') ? 'personalAuthInfo' : section.id.replace(/-(\w)/g, (_, c) => c.toUpperCase()) as keyof ContractData;
 
                         // 特殊區塊渲染
                         if (section.id === 'royalty-info') {
                             return (
                                 <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
-                                    <Button onClick={openRoyaltyModal} variant="ghost" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">編輯權利金規則</Button>
+                                    <Button type="button" onClick={openRoyaltyModal} variant="ghost" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">編輯權利金規則</Button>
                                     {/* Royalty summary */}
                                     {formData.royaltyInfo.length > 0 && formData.royaltyInfo.some(s => s.startDate || s.endDate) && (
                                         <div className="mt-3 text-sm text-gray-500">
@@ -382,6 +414,22 @@ const AcademicContract: React.FC = () => {
                                         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                                         <span className="text-sm text-gray-600">{getFileName(formData.scanFile)}</span>
                                     </div>
+                                </div>
+                            );
+                        }
+
+                        // 個人授權權利金比例區塊
+                        if (section.id === 'pa-royalty-info') {
+                            return (
+                                <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
+                                    <Button type="button" onClick={openPaRoyaltyModal} variant="ghost" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">編輯權利金規則（個人授權）</Button>
+                                    {formData.personalAuthRoyaltyInfo && formData.personalAuthRoyaltyInfo.length > 0 && formData.personalAuthRoyaltyInfo.some(s => s.startDate || s.endDate) && (
+                                        <div className="mt-3 text-sm text-gray-500">
+                                            已設定 {formData.personalAuthRoyaltyInfo.length} 個日期方案，
+                                            共 {formData.personalAuthRoyaltyInfo.reduce((sum, s) => sum + s.royaltySplits.length, 0)} 筆分潤明細
+                                        </div>
+                                    )}
                                 </div>
                             );
                         }
@@ -435,6 +483,14 @@ const AcademicContract: React.FC = () => {
                 royaltyInfo={formData.royaltyInfo}
                 onSave={saveRoyaltyChanges}
                 contractParties={formData.basicInfo.contractParty || []}
+            />
+
+            {/* Personal Auth Royalty Modal */}
+            <PersonalAuthRoyaltyModal
+                isOpen={isPaRoyaltyModalOpen}
+                onClose={closePaRoyaltyModal}
+                royaltyInfo={formData.personalAuthRoyaltyInfo || []}
+                onSave={savePaRoyaltyChanges}
             />
 
             {message.show && (

@@ -1,4 +1,80 @@
-﻿# 2026-02-12 學發部合約模組 — UI 微調 (第二批)
+﻿# 2026-03-02 學發部新增「個人授權」合約類型
+
+## 摘要
+在學術發展部的合約系統中新增「個人授權」合約標的類型。個人授權代表作者與平台單獨簽訂一篇文章的授權，欄位結構與期刊/論文集完全不同，特別是沒有卷期規則的概念。採用 DDD（圖書服務部）的條件渲染模式，依據使用者選擇的「類型」動態顯示/隱藏對應的 TOC 章節和表單欄位。
+
+## 詳細變更內容
+
+### [修改] `src/features/academic/types/index.ts`
+- 新增 `PersonalAuthRoyaltyScheme` 介面：日期方案 + 分潤明細（無卷期規則）
+- 在 `ContractData` 新增 `personalAuthInfo` 欄位（含造冊資訊、權利內容、其他資訊共 16 個子欄位）
+- 在 `ContractData` 新增 `personalAuthRoyaltyInfo` 欄位（`PersonalAuthRoyaltyScheme[]`）
+
+### [修改] `src/features/academic/constants/tocSections.ts`
+- 新增 4 個個人授權專用 TOC 章節：
+  - `pa-registration-info`：[個人授權]造冊資訊
+  - `pa-rights-info`：[個人授權]權利內容
+  - `pa-royalty-info`：[個人授權]權利金比例  
+  - `pa-other-info`：[個人授權]其他資訊
+- 加入期刊/論文集 vs 個人授權 vs 共用章節分類註解
+
+### [修改] `src/features/academic/constants/fieldConfig.ts`
+- 新增 `pa-registration-info` 欄位群組：PublicationID、類型、合約編號、期刊名稱、卷期、論文名稱_內容
+- 新增 `pa-rights-info` 欄位群組：授權書日期、授權狀態_提領方式（select）、授權地區（select）、權利金掛UID
+- 新增 `pa-other-info` 欄位群組：作者姓名、備註、Email、電話、地址、docid
+
+### [修改] `src/features/academic/constants/contractFields.ts`
+- 更新 `sectionIdToDataKey()`：`pa-*` 前綴的章節統一對應到 `personalAuthInfo`
+- 新增個人授權欄位的 `fieldConfig` 定義（與 `fieldConfig.ts` 同步）
+- 在 `fieldKeyToNameMap` 新增 16 個個人授權欄位的 key-to-name 映射
+
+### [新增] `src/features/academic/components/PersonalAuthRoyaltyModal.tsx`
+- 從 `RoyaltyModal.tsx` 簡化而來，移除卷期規則層
+- 結構：日期方案 → 分潤明細（分潤主體 + 比例%）
+- 支援新增/移除日期方案、新增/移除分潤明細、摺疊/展開
+
+### [修改] `src/features/academic/components/index.ts`
+- 新增 `PersonalAuthRoyaltyModal` 的 export
+
+### [修改] `src/pages/AcademicContract.tsx`
+- Import `PersonalAuthRoyaltyModal` 和 `PersonalAuthRoyaltyScheme` 型別
+- 在 `getInitialFormData()` 加入 `personalAuthInfo` 和 `personalAuthRoyaltyInfo` 初始值
+- 實作條件渲染邏輯（參照 DDDContract.tsx 模式）：
+  - 選「個人授權」時隱藏期刊專用章節（8 個），顯示 pa-* 章節（4 個）
+  - 選「期刊/論文集」時隱藏 pa-* 章節
+- 將 `tocSections` → `visibleTocSections`，傳入 `FloatingTOC` 和 `map` 迴圈
+- 新增 `pa-royalty-info` 區塊渲染（含「編輯權利金規則」按鈕 + 摘要）
+- 新增 `PersonalAuthRoyaltyModal` 的 state 和 handlers
+
+### [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+- 在 `SearchCriteria` 介面新增 `contractType` 欄位
+- 在 `SearchPage` 元件新增「合約標的類型」下拉選單（全部/期刊/論文集/個人授權）
+- 在 `handleSearch` 函式新增合約類型篩選邏輯
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc -b` 成功，零錯誤
+- ✅ Build 建置: `vite build` 成功完成 (6.62 秒)
+
+---
+
+
+
+## 問題
+點擊「編輯權利金規則」按鈕時會意外觸發未填寫提示驗證。
+
+## 原因
+按鈕位於 `<form>` 內但缺少 `type="button"` 屬性，導致點擊時觸發表單提交（`handleSubmit` → `handleValidation()`）。
+
+## 解決方案
+### [修改] `src/pages/AcademicContract.tsx`
+- 在「編輯權利金規則」按鈕新增 `type="button"` 屬性，防止觸發表單提交
+
+## 測試結果
+- ✅ Build: 成功完成 (12.46 秒)
+
+---
+
+
 
 ## 變更內容
 

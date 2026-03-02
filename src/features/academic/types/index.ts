@@ -30,6 +30,14 @@ export interface DateScheme {
     volumeRules: VolumeRule[];
 }
 
+// 個人授權專用：日期方案 + 分潤明細（無卷期規則）
+export interface PersonalAuthRoyaltyScheme {
+    id: string;
+    startDate: string;
+    endDate: string;
+    royaltySplits: RoyaltySplit[];
+}
+
 export interface EmbargoRule {
     id: string;
     target: string;
@@ -130,6 +138,26 @@ export interface ContractData {
     scanFile?: File | string | null;
     createdAt?: Date;
     maintenanceHistory?: unknown[];
+    // 個人授權專用欄位
+    personalAuthInfo?: {
+        publicationId: string;
+        type: string;
+        contractNo: string;
+        journalName: string;
+        volumeIssue: string;
+        articleTitle: string;
+        authorizationDate: string;
+        authorizationStatus: string;
+        authorizationRegion: string;
+        royaltyUid: string;
+        authorName: string;
+        paRemarks: string;
+        email: string;
+        phone: string;
+        address: string;
+        docid: string;
+    };
+    personalAuthRoyaltyInfo?: PersonalAuthRoyaltyScheme[];
 }
 
 export interface SearchColumn {

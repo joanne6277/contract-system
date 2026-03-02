@@ -208,6 +208,7 @@ interface ContractData {
 
 interface SearchCriteria {
     keyword: string;
+    contractType: string;
     dateMode: string;
     startDate: string;
     endDate: string;
@@ -725,6 +726,7 @@ const AcademicDeptContractModule: React.FC = () => {
         let results = [...contracts];
         if (criteria.rollbackDate) { results = results.map(c => getContractSnapshot(c, criteria.rollbackDate)); }
         if (criteria.keyword) { const lowerKeyword = criteria.keyword.toLowerCase(); results = results.filter(c => (c.contractTarget.publicationId?.toLowerCase().includes(lowerKeyword) || c.contractTarget.title?.toLowerCase().includes(lowerKeyword) || c.registrationInfo.managementNo?.toLowerCase().includes(lowerKeyword) || c.registrationInfo.departmentNo?.toLowerCase().includes(lowerKeyword) || c.registrationInfo.departmentSubNo?.toLowerCase().includes(lowerKeyword) || c.basicInfo.contractParty?.toLowerCase().includes(lowerKeyword))); }
+        if (criteria.contractType) { results = results.filter(c => c.contractTarget.type === criteria.contractType); }
         if (criteria.startDate && criteria.endDate) {
             const searchStart = new Date(criteria.startDate); const searchEnd = new Date(criteria.endDate); results = results.filter(c => {
                 const contractStart = new Date(c.basicInfo.contractStartDate); const contractEnd = new Date(c.basicInfo.contractEndDate); if (!c.basicInfo.contractStartDate || !c.basicInfo.contractEndDate) return false; switch (criteria.dateMode) {
@@ -1194,7 +1196,7 @@ const AcademicDeptContractModule: React.FC = () => {
 
 const SearchPage: React.FC<{ onSearch: (criteria: SearchCriteria) => void }> = ({ onSearch }) => {
     const navigate = useNavigate();
-    const [criteria, setCriteria] = useState<SearchCriteria>({ keyword: '', dateMode: 'effective', startDate: '', endDate: '', rollbackDate: '' });
+    const [criteria, setCriteria] = useState<SearchCriteria>({ keyword: '', contractType: '', dateMode: 'effective', startDate: '', endDate: '', rollbackDate: '' });
     const handleInputChange = (field: keyof SearchCriteria, value: string) => { setCriteria(prev => ({ ...prev, [field]: value })); };
     const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSearch(criteria); };
     return (
@@ -1204,6 +1206,14 @@ const SearchPage: React.FC<{ onSearch: (criteria: SearchCriteria) => void }> = (
 
             </div>
             <div><label className="block text-sm font-medium text-gray-700 mb-2">關鍵字</label><input type="text" value={criteria.keyword} onChange={e => handleInputChange('keyword', e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="搜尋 PublicationID, 刊名, 各類編號, 簽約單位..." /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-2">合約標的類型</label>
+                <select value={criteria.contractType} onChange={e => handleInputChange('contractType', e.target.value)} className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg">
+                    <option value="">全部</option>
+                    <option value="期刊">期刊</option>
+                    <option value="論文集">論文集</option>
+                    <option value="個人授權">個人授權</option>
+                </select>
+            </div>
             <div><label className="block text-sm font-medium text-gray-700 mb-2">合約期間</label><div className="grid grid-cols-1 md:grid-cols-4 gap-4"><select value={criteria.dateMode} onChange={e => handleInputChange('dateMode', e.target.value)} className="md:col-span-1 w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="effective">在此期間內有效</option><option value="starts">在此期間內開始</option><option value="ends">在此期間內到期</option><option value="within">起訖日皆在此期間內</option></select><div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center"><input type="date" value={criteria.startDate} onChange={e => handleInputChange('startDate', e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /><input type="date" value={criteria.endDate} onChange={e => handleInputChange('endDate', e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div></div></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-2">回溯至 (選填)</label><input type="date" value={criteria.rollbackDate} onChange={e => handleInputChange('rollbackDate', e.target.value)} className="w-full md:w-1/2 px-4 py-2 border border-gray-300 rounded-lg" /><p className="text-xs text-gray-500 mt-1">選擇一個過去的日期，以檢視當天所有合約的歷史狀態。</p></div>
             <div className="flex justify-end"><Button type="submit"><Search size={18} className="mr-2" />執行搜尋</Button></div>

@@ -27,6 +27,8 @@ interface FormFieldConfig {
 
 // --- Helper to convert section ID to data key ---
 export const sectionIdToDataKey = (id: string): string => {
+    // 個人授權章節統一對應到 personalAuthInfo
+    if (id.startsWith('pa-')) return 'personalAuthInfo';
     const key = id.replace(/-(\w)/g, (_, c) => c.toUpperCase());
     return key;
 }
@@ -129,7 +131,30 @@ export const fieldConfig: { [sectionId: string]: FormFieldConfig[] } = {
     ],
     'remarks': [
         { id: 'remarks', label: '', type: 'textarea' },
-    ]
+    ],
+    // --- 個人授權專用欄位 ---
+    'pa-registration-info': [
+        { id: 'publicationId', label: 'PublicationID', type: 'text' },
+        { id: 'type', label: '類型', type: 'text', isReadOnly: true },
+        { id: 'contractNo', label: '合約編號', type: 'text' },
+        { id: 'journalName', label: '期刊名稱', type: 'text' },
+        { id: 'volumeIssue', label: '卷期', type: 'text' },
+        { id: 'articleTitle', label: '論文名稱_內容', type: 'text', fullWidth: true },
+    ],
+    'pa-rights-info': [
+        { id: 'authorizationDate', label: '授權書日期', type: 'date' },
+        { id: 'authorizationStatus', label: '授權狀態_提領方式', type: 'select', options: ['非專個人領取', '非專無償', '個人領取', '捐贈慈善基金會'] },
+        { id: 'authorizationRegion', label: '授權地區', type: 'select', options: ['不上CN', '全球用戶'] },
+        { id: 'royaltyUid', label: '權利金掛UID', type: 'text' },
+    ],
+    'pa-other-info': [
+        { id: 'authorName', label: '作者姓名', type: 'text' },
+        { id: 'paRemarks', label: '備註', type: 'textarea', fullWidth: true },
+        { id: 'email', label: 'Email', type: 'text' },
+        { id: 'phone', label: '電話', type: 'text' },
+        { id: 'address', label: '地址', type: 'text', fullWidth: true },
+        { id: 'docid', label: 'docid', type: 'text' },
+    ],
 };
 
 // --- Field Key to Name Map ---
@@ -156,6 +181,23 @@ export const fieldKeyToNameMap: { [key: string]: string } = {
     'otherClauses.damages_description': '損害賠償 (說明)',
     'otherClauses.damages': '損害賠償',
     'remarks.remarks': '備註',
+    // 個人授權欄位
+    'personalAuthInfo.publicationId': 'PublicationID (個人授權)',
+    'personalAuthInfo.type': '類型 (個人授權)',
+    'personalAuthInfo.contractNo': '合約編號',
+    'personalAuthInfo.journalName': '期刊名稱',
+    'personalAuthInfo.volumeIssue': '卷期',
+    'personalAuthInfo.articleTitle': '論文名稱_內容',
+    'personalAuthInfo.authorizationDate': '授權書日期',
+    'personalAuthInfo.authorizationStatus': '授權狀態_提領方式',
+    'personalAuthInfo.authorizationRegion': '授權地區',
+    'personalAuthInfo.royaltyUid': '權利金掛UID',
+    'personalAuthInfo.authorName': '作者姓名',
+    'personalAuthInfo.paRemarks': '備註 (個人授權)',
+    'personalAuthInfo.email': 'Email',
+    'personalAuthInfo.phone': '電話',
+    'personalAuthInfo.address': '地址',
+    'personalAuthInfo.docid': 'docid',
 };
 
 // Initialize the map and ordered keys from config

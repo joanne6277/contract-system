@@ -9,11 +9,12 @@ import { useParams } from 'react-router-dom';
 import { sampleContracts } from '@/data/mockContracts';
 import { tocSections, fieldConfig } from '@/features/academic/constants';
 // 引入型別
-import type { ContractData, RoyaltySplit, VolumeRule, DateScheme, RemittanceInfoItem, VolumeIdentifier, FormFieldConfig } from '@/features/academic/types';
+import type { ContractData, RoyaltySplit, VolumeRule, DateScheme, RemittanceInfoItem, VolumeIdentifier, FormFieldConfig, PersonalAuthRoyaltyScheme } from '@/features/academic/types';
 // 引入自定義 Hook
 import { useContractForm } from '@/shared/hooks';
 import { exportMaintenanceHistory } from '@/features/academic/utils/exportUtils';
 import { fieldNameToKeyMap } from '@/features/academic/constants/contractFields';
+import { PersonalAuthRoyaltyModal } from '@/features/academic/components';
 
 
 // --- 1. 輔助函式與初始資料 (Helper Functions & Initial Data) ---
@@ -55,7 +56,8 @@ const getInitialRemittanceInfoItem = (beneficiary: string): RemittanceInfoItem =
 
 const getInitialFormData = (): ContractData => {
     return {
-        contractTarget: { publicationId: '', type: '', title: '', volumeInfo: '', issnIsbn: '' },
+        contractType: 'journal_proceedings',
+        contractTarget: { publicationId: '', type: '期刊', title: '', volumeInfo: '', issnIsbn: '' },
         registrationInfo: { managementNo: '', departmentNo: '', departmentSubNo: '', collector: '', asResponsible: '', isCurrent: '否', contractVersion: [], nonAiritiVersion: '' },
         basicInfo: { partyARep: '', partyBRep: '', contractParty: [], contractStartDate: '', contractEndDate: '', autoRenewYears: '', autoRenewFrequency: '', thereafter: '否', specialDateInfo: '' },
         rightsInfo: { authorizationFormMain: '', authorizationFormSub: '', paymentType: '有償', isOpenAccess: '無' },
@@ -173,8 +175,23 @@ const AcademicMaintainContract: React.FC = () => {
     const mainContentRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // 個人授權權利金 Modal 狀態
+    const [isPaRoyaltyModalOpen, setIsPaRoyaltyModalOpen] = useState(false);
+
+    // 依合約類型過濾 TOC 章節（參照 DDDContract.tsx 的條件渲染模式）
+    const contractType = formData.contractType === 'personal_auth' ? '個人授權' : formData.contractTarget?.type;
+    const isPersonalAuth = contractType === '個人授權';
+    const journalSections = ['registration-info', 'termination-info', 'basic-info', 'rights-info', 'royalty-info', 'scope-info', 'other-clauses', 'remittance-info'];
+    const paSections = ['pa-registration-info', 'pa-rights-info', 'pa-royalty-info', 'pa-other-info'];
+    const visibleTocSections = tocSections.filter(section => {
+        if (isPersonalAuth && journalSections.includes(section.id)) return false;
+        if (!isPersonalAuth && paSections.includes(section.id)) return false;
+        return true;
+    });
+
     // 日期連動邏輯
     useEffect(() => {
+        if (formData.contractType !== 'journal_proceedings') return;
         const { contractStartDate, contractEndDate } = formData.basicInfo;
         const royaltyInfo = formData.royaltyInfo;
         if (contractStartDate && contractEndDate && royaltyInfo && royaltyInfo.length === 1) {
@@ -182,14 +199,15 @@ const AcademicMaintainContract: React.FC = () => {
             const isSchemeEmpty = !firstScheme.startDate && !firstScheme.endDate;
             if (isSchemeEmpty) {
                 setFormData(prev => {
-                    const newFormData = JSON.parse(JSON.stringify(prev));
+                    if (prev.contractType !== 'journal_proceedings') return prev;
+                    const newFormData = JSON.parse(JSON.stringify(prev)) as Extract<ContractData, { contractType: 'journal_proceedings' }>;
                     newFormData.royaltyInfo[0].startDate = contractStartDate;
                     newFormData.royaltyInfo[0].endDate = contractEndDate;
                     return newFormData;
                 });
             }
         }
-    }, [formData.basicInfo, setFormData, formData.royaltyInfo]);
+    }, [formData, setFormData]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -211,7 +229,7 @@ const AcademicMaintainContract: React.FC = () => {
     };
 
     const openRoyaltyModal = () => {
-        setTempRoyaltyInfo(JSON.parse(JSON.stringify(formData.royaltyInfo)));
+        setTempRoyaltyInfo(formData.contractType === 'journal_proceedings' ? JSON.parse(JSON.stringify(formData.royaltyInfo)) : []);
         setIsRoyaltyModalOpen(true);
     };
     const closeRoyaltyModal = () => setIsRoyaltyModalOpen(false);
@@ -232,13 +250,22 @@ const AcademicMaintainContract: React.FC = () => {
     const addDateScheme = () => setTempRoyaltyInfo(prev => [...prev, getInitialDateScheme()]);
     const removeDateScheme = (idx: number) => setTempRoyaltyInfo(prev => prev.filter((_, i) => i !== idx));
 
+    // 個人授權權利金 Modal 操作
+    const openPaRoyaltyModal = () => setIsPaRoyaltyModalOpen(true);
+    const closePaRoyaltyModal = () => setIsPaRoyaltyModalOpen(false);
+    const savePaRoyaltyChanges = (data: PersonalAuthRoyaltyScheme[]) => {
+        setFormData(prev => ({ ...prev, personalAuthRoyaltyInfo: data }));
+    };
+
     const syncBeneficiariesToRemittance = () => {
+        if (formData.contractType !== 'journal_proceedings') return;
         const allBeneficiaries = new Set<string>();
         formData.royaltyInfo.forEach(scheme => scheme.volumeRules.forEach(rule => rule.royaltySplits.forEach(split => {
             if (split.beneficiary.trim()) allBeneficiaries.add(split.beneficiary.trim());
         })));
 
         setFormData(prev => {
+            if (prev.contractType !== 'journal_proceedings') return prev;
             const newRemittanceInfo = [...prev.remittanceInfo];
             const existing = new Set(newRemittanceInfo.map(i => i.beneficiary));
             allBeneficiaries.forEach(b => { if (!existing.has(b)) newRemittanceInfo.push(getInitialRemittanceInfoItem(b)); });
@@ -248,10 +275,13 @@ const AcademicMaintainContract: React.FC = () => {
     };
 
     const handleRemoveRemittanceItem = (id: string) => {
-        setFormData(prev => ({
-            ...prev,
-            remittanceInfo: prev.remittanceInfo.filter(item => item.id !== id)
-        }));
+        setFormData(prev => {
+            if (prev.contractType !== 'journal_proceedings') return prev;
+            return {
+                ...prev,
+                remittanceInfo: prev.remittanceInfo.filter(item => item.id !== id)
+            }
+        });
         showMessage('匯款資料已移除。');
     };
 
@@ -262,14 +292,15 @@ const AcademicMaintainContract: React.FC = () => {
             showMessage('此合約尚無維護歷程可匯出。', 'error');
             return;
         }
-        exportMaintenanceHistory(history, formData.contractTarget.title || 'Contract', formData, fieldNameToKeyMap);
+        const contractTitle = formData.contractType === 'journal_proceedings' ? formData.contractTarget.title : (formData.personalAuthInfo?.articleTitle || 'Contract');
+        exportMaintenanceHistory(history, contractTitle || 'Contract', formData, fieldNameToKeyMap);
         showMessage('維護歷程匯出成功！');
     };
 
     // --- JSX Render ---
     return (
         <div className="relative">
-            <FloatingTOC onJump={handleTocJump} sections={tocSections} />
+            <FloatingTOC onJump={handleTocJump} sections={visibleTocSections} />
 
             <div ref={mainContentRef} className="max-w-7xl mx-auto">
                 {/* Header (No Import) */}
@@ -285,10 +316,10 @@ const AcademicMaintainContract: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8 pb-20">
-                    {tocSections.map(section => {
-                        const dataKey = section.id.replace(/-(\w)/g, (_, c) => c.toUpperCase()) as keyof ContractData;
+                    {visibleTocSections.map(section => {
+                        const dataKey = section.id.startsWith('pa-') ? 'personalAuthInfo' : section.id.replace(/-(\w)/g, (_, c) => c.toUpperCase()) as keyof ContractData;
 
-                        if (section.id === 'royalty-info') {
+                        if (section.id === 'royalty-info' && formData.contractType === 'journal_proceedings') {
                             return (
                                 <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
@@ -296,7 +327,7 @@ const AcademicMaintainContract: React.FC = () => {
                                 </div>
                             );
                         }
-                        if (section.id === 'remittance-info') {
+                        if (section.id === 'remittance-info' && formData.contractType === 'journal_proceedings') {
                             return (
                                 <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
@@ -339,6 +370,21 @@ const AcademicMaintainContract: React.FC = () => {
                                         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                                         <span className="text-sm text-gray-600">{getFileName(formData.scanFile)}</span>
                                     </div>
+                                </div>
+                            );
+                        }
+
+                        if (section.id === 'pa-royalty-info' && formData.contractType === 'personal_auth') {
+                            return (
+                                <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
+                                    <Button type="button" onClick={openPaRoyaltyModal} variant="ghost" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">編輯權利金規則（個人授權）</Button>
+                                    {formData.personalAuthRoyaltyInfo && formData.personalAuthRoyaltyInfo.length > 0 && formData.personalAuthRoyaltyInfo.some(s => s.startDate || s.endDate) && (
+                                        <div className="mt-3 text-sm text-gray-500">
+                                            已設定 {formData.personalAuthRoyaltyInfo.length} 個日期方案，
+                                            共 {formData.personalAuthRoyaltyInfo.reduce((sum, s) => sum + s.royaltySplits.length, 0)} 筆分潤明細
+                                        </div>
+                                    )}
                                 </div>
                             );
                         }
@@ -405,6 +451,14 @@ const AcademicMaintainContract: React.FC = () => {
                     <Button variant="ghost" onClick={addDateScheme} className="text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"><Plus size={16} className="mr-2" /> 新增日期方案</Button>
                 </div>
             </Modal>
+
+            {/* Personal Auth Royalty Modal */}
+            <PersonalAuthRoyaltyModal
+                isOpen={isPaRoyaltyModalOpen}
+                onClose={closePaRoyaltyModal}
+                royaltyInfo={formData.contractType === 'personal_auth' ? (formData.personalAuthRoyaltyInfo || []) : []}
+                onSave={savePaRoyaltyChanges}
+            />
 
             {message.show && (
                 <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg text-white shadow-lg z-100 ${message.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>

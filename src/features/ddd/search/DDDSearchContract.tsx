@@ -317,7 +317,7 @@ const dropdownOptions: { [key: string]: { value: string; label: string }[] } = {
     'basicInfo.contractTargetType': [
         { value: 'ebook', label: '電子書' },
         { value: 'ejournal', label: '電子雜誌' },
-        { value: 'taiwaneseBook', label: '台版書' }
+        { value: 'taiwan_book', label: '台版書' }
     ],
     'accountingInfo.entityType': [
         { value: 'public', label: '公部門' },
@@ -372,7 +372,7 @@ const allPlatforms = [
 
 const searchContractTypeOptions = [
     { value: 'e-content', label: '電子書/電子雜誌' },
-    { value: 'taiwaneseBook', label: '台版書' }
+    { value: 'taiwan_book', label: '台版書' }
 ];
 
 // --- 顯示欄位設定 ---
@@ -451,6 +451,54 @@ const columnConfig = {
         },
         {
             group: '台版書採購/帳務相關',
+            columns: [
+                { id: 'twBookAccounting.twBookOverseasDiscount', label: '台版書海外供貨折扣(含稅)' },
+                { id: 'twBookAccounting.twBookPaymentMethod', label: '貨款付款方式' },
+                { id: 'twBookAccounting.twBookPaymentTerms', label: '貨款支付時間(票期)' },
+                { id: 'twBookAccounting.twBookAccountHolder', label: '戶名/抬頭' },
+                { id: 'twBookAccounting.twBookPayeeInfo', label: '收款單位' },
+                { id: 'twBookAccounting.twBookBankName', label: '銀行名稱' },
+                { id: 'twBookAccounting.twBookBranchName', label: '分行/支局' },
+                { id: 'twBookAccounting.twBookAccountNumber', label: '帳號' },
+            ]
+        }
+    ]
+};
+
+const taiwaneseBookColumnConfig = {
+    defaultVisible: [
+        'basicInfo.contractStatus',
+        'registrationInfo.ebookContractNo',
+        'basicInfo.publisherName',
+        'registrationInfo.airitiContractNo',
+        'basicInfo.contractDateRange',
+        'twBookAccounting.twBookOverseasDiscount',
+    ],
+    selectable: [
+        {
+            group: '造冊資訊',
+            columns: [
+                { id: 'registrationInfo.acquisitionMaintainer', label: '徵集維護人員' },
+                { id: 'registrationInfo.asTeamMaintainer', label: 'as組維護人員' },
+                { id: 'basicInfo.contractStatus', label: '合約狀態' },
+                { id: 'registrationInfo.ebookContractNo', label: '【圖服部】台版書合約編號' },
+            ]
+        },
+        {
+            group: '基本資訊',
+            columns: [
+                { id: 'basicInfo.contractVersionNo', label: '合約版本號' },
+                { id: 'basicInfo.publisherName', label: '出版單位名稱' },
+                { id: 'basicInfo.airitiSignatory', label: '華藝簽約人員' },
+                { id: 'registrationInfo.airitiContractNo', label: '華藝合約編號' },
+                { id: 'basicInfo.contractDateRange', label: '合約起訖日' },
+                { id: 'basicInfo.autoRenewYears', label: '自動續約年' },
+                { id: 'basicInfo.autoRenewTimes', label: '自動續約次數' },
+                { id: 'basicInfo.thereafter', label: '其後亦同' },
+            ]
+        },
+        {
+            group: '帳務相關',
             columns: [
                 { id: 'twBookAccounting.twBookOverseasDiscount', label: '台版書海外供貨折扣(含稅)' },
                 { id: 'twBookAccounting.twBookPaymentMethod', label: '貨款付款方式' },
@@ -595,7 +643,9 @@ const FilterDrawer = ({ isOpen, onClose, activeFilters, onFilterChange, searchCo
     const handleClear = () => { onFilterChange({}); };
 
     const [openSections, setOpenSections] = useState({
+        registration: true,
         basicInfo: true,
+        rightsAccounting: true,
         ebookRights: false,
         sales2b: false,
         sales2c: false,
@@ -620,58 +670,72 @@ const FilterDrawer = ({ isOpen, onClose, activeFilters, onFilterChange, searchCo
                     <Button variant="ghost" size="sm" onClick={onClose}><X size={20} /></Button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 space-y-2">
-                    <CollapsibleSection title="基本資料" isOpen={openSections.basicInfo} onToggle={() => toggleSection('basicInfo')}>
-                        <FilterTextInput label="徵集維護人員" value={activeFilters.acquisitionMaintainer || ''} onChange={val => handleFilterChange('acquisitionMaintainer', val)} />
-                        <FilterTextInput label="AS組維護人員" value={activeFilters.asTeamMaintainer || ''} onChange={val => handleFilterChange('asTeamMaintainer', val)} />
-                        <FilterRadioGroup label="合作中" value={activeFilters.contractStatus || ''} options={radioOptions['basicInfo.contractStatus']} onChange={val => handleFilterChange('contractStatus', val)} />
-                        <FilterRadioGroup label="解約" value={activeFilters.earlyTermination || ''} options={radioOptions['basicInfo.earlyTermination']} onChange={val => handleFilterChange('earlyTermination', val)} />
-                        <FilterTextInput label="自動續約年" value={activeFilters.autoRenewYears || ''} onChange={val => handleFilterChange('autoRenewYears', val)} />
-                        <FilterTextInput label="自動續約次數" value={activeFilters.autoRenewTimes || ''} onChange={val => handleFilterChange('autoRenewTimes', val)} />
-                        <FilterRadioGroup label="其後亦同" value={activeFilters.thereafter || ''} options={radioOptions['basicInfo.thereafter']} onChange={val => handleFilterChange('thereafter', val)} />
-                        <FilterTextInput label="合約版本號" value={activeFilters.contractVersionNo || ''} onChange={val => handleFilterChange('contractVersionNo', val)} />
-                        <FilterTextInput label="合約名稱" value={activeFilters.contractName || ''} onChange={val => handleFilterChange('contractName', val)} />
-                    </CollapsibleSection>
-
-                    {searchContractType !== 'taiwaneseBook' && (
+                    {searchContractType === 'taiwan_book' ? (
                         <>
-                            <CollapsibleSection title="電子書基本權利" isOpen={openSections.ebookRights} onToggle={() => toggleSection('ebookRights')}>
-                                <FilterRadioGroup label="全文數位化" value={activeFilters.fullTextDigitization || ''} options={booleanOptions} onChange={val => handleFilterChange('fullTextDigitization', val)} />
-                                <FilterRadioGroup label="試用權限" value={activeFilters.trialAccess || ''} options={booleanOptions} onChange={val => handleFilterChange('trialAccess', val)} />
-                                <FilterRadioGroup label="TTS" value={activeFilters.tts || ''} options={booleanOptions} onChange={val => handleFilterChange('tts', val)} />
-                                <FilterRadioGroup label="第三方授權" value={activeFilters.thirdPartyAuthorization || ''} options={booleanOptions} onChange={val => handleFilterChange('thirdPartyAuthorization', val)} />
-                                <FilterRadioGroup label="第三方代銷" value={activeFilters.thirdPartyConsignment || ''} options={booleanOptions} onChange={val => handleFilterChange('thirdPartyConsignment', val)} />
-                                <FilterRadioGroup label="DOI申請" value={activeFilters.doiApplication || ''} options={booleanOptions} onChange={val => handleFilterChange('doiApplication', val)} />
+                            <CollapsibleSection title="造冊資訊" isOpen={openSections.registration !== false} onToggle={() => toggleSection('registration')}>
+                                <FilterTextInput label="徵集維護人員" value={activeFilters.acquisitionMaintainer || ''} onChange={val => handleFilterChange('acquisitionMaintainer', val)} />
+                                <FilterTextInput label="AS組維護人員" value={activeFilters.asTeamMaintainer || ''} onChange={val => handleFilterChange('asTeamMaintainer', val)} />
+                                <FilterRadioGroup label="合約狀態" value={activeFilters.contractStatus || ''} options={radioOptions['basicInfo.contractStatus']} onChange={val => handleFilterChange('contractStatus', val)} />
                             </CollapsibleSection>
-                            <CollapsibleSection title="2B銷售權利" isOpen={openSections.sales2b} onToggle={() => toggleSection('sales2b')}>
-                                <FilterRadioGroup label="B2B銷售權利" value={activeFilters.b2bSalesRightsToggle || ''} options={radioOptions['scopeInfo.b2bSalesRightsToggle']} onChange={val => handleFilterChange('b2bSalesRightsToggle', val)} />
-                                <FilterTextInput label="B2B授權類型" value={activeFilters.b2bAuthorizationType || ''} onChange={val => handleFilterChange('b2bAuthorizationType', val)} />
-                                <FilterRadioGroup label="電子館合銷售權利" value={activeFilters.eLibrarySalesRight || ''} options={radioOptions['scopeInfo.eLibrarySalesRight']} onChange={val => handleFilterChange('eLibrarySalesRight', val)} />
+                            <CollapsibleSection title="基本資訊" isOpen={openSections.basicInfo !== false} onToggle={() => toggleSection('basicInfo')}>
+                                <FilterTextInput label="合約版本號" value={activeFilters.contractVersionNo || ''} onChange={val => handleFilterChange('contractVersionNo', val)} />
+                                <FilterTextInput label="合約名稱" value={activeFilters.contractName || ''} onChange={val => handleFilterChange('contractName', val)} />
+                                <FilterTextInput label="自動續約年" value={activeFilters.autoRenewYears || ''} onChange={val => handleFilterChange('autoRenewYears', val)} />
+                                <FilterTextInput label="自動續約次數" value={activeFilters.autoRenewTimes || ''} onChange={val => handleFilterChange('autoRenewTimes', val)} />
+                                <FilterRadioGroup label="其後亦同" value={activeFilters.thereafter || ''} options={radioOptions['basicInfo.thereafter']} onChange={val => handleFilterChange('thereafter', val)} />
                             </CollapsibleSection>
-                            <CollapsibleSection title="2C銷售權利" isOpen={openSections.sales2c} onToggle={() => toggleSection('sales2c')}>
-                                <FilterRadioGroup label="B2C銷售權利" value={activeFilters.b2cSalesRightsToggle || ''} options={radioOptions['otherClauses.b2cSalesRightsToggle']} onChange={val => handleFilterChange('b2cSalesRightsToggle', val)} />
-                                <FilterTextInput label="B2C授權類型" value={activeFilters.b2cAuthorizationType || ''} onChange={val => handleFilterChange('b2cAuthorizationType', val)} />
-                                <FilterRadioGroup label="TRMS銷售權利" value={activeFilters.trmsSalesRightsToggle || ''} options={radioOptions['otherClauses.trmsSalesRightsToggle']} onChange={val => handleFilterChange('trmsSalesRightsToggle', val)} />
-                                <FilterRadioGroup label="經銷平台上架權" value={activeFilters.distributorPlatformToggle || ''} options={radioOptions['otherClauses.distributorPlatformToggle']} onChange={val => handleFilterChange('distributorPlatformToggle', val)} />
-                                <MultiSelectPillFilter
-                                    label="平台權利狀態"
-                                    value={activeFilters.platformRights || []}
-                                    onChange={val => handleFilterChange('platformRights', val)}
+                            <CollapsibleSection title="權利/帳務" isOpen={openSections.rightsAccounting !== false} onToggle={() => toggleSection('rightsAccounting')}>
+                                <FilterRadioGroup label="全文數位化" value={activeFilters.fullTextDigitizationTwBook || ''} options={radioOptions['twBookRights.fullTextDigitizationTwBook']} onChange={val => handleFilterChange('fullTextDigitizationTwBook', val)} />
+                                <FilterRangeInput
+                                    label="台版書海外供貨折扣(含稅)"
+                                    value={activeFilters.twBookOverseasDiscount || ''}
+                                    onChange={val => handleFilterChange('twBookOverseasDiscount', val)}
+                                    placeholderStart="起始值"
+                                    placeholderEnd="結束值"
                                 />
                             </CollapsibleSection>
                         </>
-                    )}
+                    ) : (
+                        <>
+                            <CollapsibleSection title="基本資料" isOpen={openSections.basicInfo} onToggle={() => toggleSection('basicInfo')}>
+                                <FilterTextInput label="徵集維護人員" value={activeFilters.acquisitionMaintainer || ''} onChange={val => handleFilterChange('acquisitionMaintainer', val)} />
+                                <FilterTextInput label="AS組維護人員" value={activeFilters.asTeamMaintainer || ''} onChange={val => handleFilterChange('asTeamMaintainer', val)} />
+                                <FilterRadioGroup label="合作中" value={activeFilters.contractStatus || ''} options={radioOptions['basicInfo.contractStatus']} onChange={val => handleFilterChange('contractStatus', val)} />
+                                <FilterRadioGroup label="解約" value={activeFilters.earlyTermination || ''} options={radioOptions['basicInfo.earlyTermination']} onChange={val => handleFilterChange('earlyTermination', val)} />
+                                <FilterTextInput label="自動續約年" value={activeFilters.autoRenewYears || ''} onChange={val => handleFilterChange('autoRenewYears', val)} />
+                                <FilterTextInput label="自動續約次數" value={activeFilters.autoRenewTimes || ''} onChange={val => handleFilterChange('autoRenewTimes', val)} />
+                                <FilterRadioGroup label="其後亦同" value={activeFilters.thereafter || ''} options={radioOptions['basicInfo.thereafter']} onChange={val => handleFilterChange('thereafter', val)} />
+                                <FilterTextInput label="合約版本號" value={activeFilters.contractVersionNo || ''} onChange={val => handleFilterChange('contractVersionNo', val)} />
+                                <FilterTextInput label="合約名稱" value={activeFilters.contractName || ''} onChange={val => handleFilterChange('contractName', val)} />
+                            </CollapsibleSection>
 
-                    {searchContractType !== 'e-content' && (
-                        <CollapsibleSection title="台版書" isOpen={openSections.twBook} onToggle={() => toggleSection('twBook')}>
-                            <FilterRadioGroup label="全文數位化" value={activeFilters.fullTextDigitizationTwBook || ''} options={radioOptions['twBookRights.fullTextDigitizationTwBook']} onChange={val => handleFilterChange('fullTextDigitizationTwBook', val)} />
-                            <FilterRangeInput
-                                label="台版書海外供貨折扣(含稅)"
-                                value={activeFilters.twBookOverseasDiscount || ''}
-                                onChange={val => handleFilterChange('twBookOverseasDiscount', val)}
-                                placeholderStart="起始值"
-                                placeholderEnd="結束值"
-                            />
-                        </CollapsibleSection>
+                            <>
+                                <CollapsibleSection title="電子書基本權利" isOpen={openSections.ebookRights} onToggle={() => toggleSection('ebookRights')}>
+                                    <FilterRadioGroup label="全文數位化" value={activeFilters.fullTextDigitization || ''} options={booleanOptions} onChange={val => handleFilterChange('fullTextDigitization', val)} />
+                                    <FilterRadioGroup label="試用權限" value={activeFilters.trialAccess || ''} options={booleanOptions} onChange={val => handleFilterChange('trialAccess', val)} />
+                                    <FilterRadioGroup label="TTS" value={activeFilters.tts || ''} options={booleanOptions} onChange={val => handleFilterChange('tts', val)} />
+                                    <FilterRadioGroup label="第三方授權" value={activeFilters.thirdPartyAuthorization || ''} options={booleanOptions} onChange={val => handleFilterChange('thirdPartyAuthorization', val)} />
+                                    <FilterRadioGroup label="第三方代銷" value={activeFilters.thirdPartyConsignment || ''} options={booleanOptions} onChange={val => handleFilterChange('thirdPartyConsignment', val)} />
+                                    <FilterRadioGroup label="DOI申請" value={activeFilters.doiApplication || ''} options={booleanOptions} onChange={val => handleFilterChange('doiApplication', val)} />
+                                </CollapsibleSection>
+                                <CollapsibleSection title="2B銷售權利" isOpen={openSections.sales2b} onToggle={() => toggleSection('sales2b')}>
+                                    <FilterRadioGroup label="B2B銷售權利" value={activeFilters.b2bSalesRightsToggle || ''} options={radioOptions['scopeInfo.b2bSalesRightsToggle']} onChange={val => handleFilterChange('b2bSalesRightsToggle', val)} />
+                                    <FilterTextInput label="B2B授權類型" value={activeFilters.b2bAuthorizationType || ''} onChange={val => handleFilterChange('b2bAuthorizationType', val)} />
+                                    <FilterRadioGroup label="電子館合銷售權利" value={activeFilters.eLibrarySalesRight || ''} options={radioOptions['scopeInfo.eLibrarySalesRight']} onChange={val => handleFilterChange('eLibrarySalesRight', val)} />
+                                </CollapsibleSection>
+                                <CollapsibleSection title="2C銷售權利" isOpen={openSections.sales2c} onToggle={() => toggleSection('sales2c')}>
+                                    <FilterRadioGroup label="B2C銷售權利" value={activeFilters.b2cSalesRightsToggle || ''} options={radioOptions['otherClauses.b2cSalesRightsToggle']} onChange={val => handleFilterChange('b2cSalesRightsToggle', val)} />
+                                    <FilterTextInput label="B2C授權類型" value={activeFilters.b2cAuthorizationType || ''} onChange={val => handleFilterChange('b2cAuthorizationType', val)} />
+                                    <FilterRadioGroup label="TRMS銷售權利" value={activeFilters.trmsSalesRightsToggle || ''} options={radioOptions['otherClauses.trmsSalesRightsToggle']} onChange={val => handleFilterChange('trmsSalesRightsToggle', val)} />
+                                    <FilterRadioGroup label="經銷平台上架權" value={activeFilters.distributorPlatformToggle || ''} options={radioOptions['otherClauses.distributorPlatformToggle']} onChange={val => handleFilterChange('distributorPlatformToggle', val)} />
+                                    <MultiSelectPillFilter
+                                        label="平台權利狀態"
+                                        value={activeFilters.platformRights || []}
+                                        onChange={val => handleFilterChange('platformRights', val)}
+                                    />
+                                </CollapsibleSection>
+                            </>
+                        </>
                     )}
                 </div>
                 <div className="p-4 bg-gray-50/80 border-t border-gray-100 flex justify-between gap-3 backdrop-blur-sm">
@@ -735,7 +799,7 @@ const FilterRangeInput = ({ label, value, onChange, placeholderStart, placeholde
     );
 };
 
-const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns, selectableColumns }) => {
+const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns, selectableColumns, searchContractType }) => {
     const [tempVisibleColumns, setTempVisibleColumns] = useState(new Set(visibleColumns));
     const checkboxRef = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
@@ -773,7 +837,12 @@ const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns, se
     };
 
     const handleApply = () => { setVisibleColumns(tempVisibleColumns); onClose(); };
-    const handleReset = () => { setTempVisibleColumns(new Set(columnConfig.defaultVisible)); };
+    const handleReset = () => {
+        const defaults = searchContractType === 'taiwan_book'
+            ? taiwaneseBookColumnConfig.defaultVisible
+            : columnConfig.defaultVisible;
+        setTempVisibleColumns(new Set(defaults));
+    };
 
     useEffect(() => {
         selectableColumns.forEach(group => {
@@ -863,13 +932,20 @@ const DDDSearchContract: React.FC = () => {
         console.log('TuFu Contracts State Updated:', contracts.length);
     }, [contracts]);
 
-    const allColumns = useMemo(() => columnConfig.selectable.flatMap(g => g.columns), []);
+    const allColumns = useMemo(() => {
+        const generic = columnConfig.selectable.flatMap(g => g.columns);
+        const tw = taiwaneseBookColumnConfig.selectable.flatMap(g => g.columns);
+        const unique = new Map();
+        generic.forEach(c => unique.set(c.id, c));
+        tw.forEach(c => unique.set(c.id, c));
+        return Array.from(unique.values());
+    }, []);
     useEffect(() => { setDisplayedColumns(prevOrder => { const newOrder = prevOrder.filter(id => visibleColumns.has(id)); const currentOrderSet = new Set(newOrder); const addedColumns = [...visibleColumns].filter(id => !currentOrderSet.has(id)); return [...newOrder, ...addedColumns]; }); }, [visibleColumns]);
 
     const filteredTocSections = useMemo(() => {
         if (currentPage === 'contract-detail' && currentContract) {
             const type = currentContract.basicInfo.contractTargetType;
-            if (type === 'taiwaneseBook') {
+            if (type === 'taiwan_book') {
                 return tocSections.filter(s => !s.title.includes('[電子書]'));
             }
             if (['ebook', 'ejournal'].includes(type)) {
@@ -884,40 +960,17 @@ const DDDSearchContract: React.FC = () => {
     // --- Search & Filter Logic ---
     const handleSearch = useCallback((criteria: SearchCriteria) => {
         console.log('handleSearch called with:', criteria);
-        // ...Existing search logic... but I need to inject logs inside it.
-        // Since I cannot inject inside existing function easily with replace_file_content if I don't replace the whole function,
-        // I will replace the whole handleSearch function.
-        setSearchContractType(criteria.contractTargetType);
-        // setSelectedContractIds(new Set()); // Fixed: Removed call to undefined function that caused crash 
-        // Wait, looking at file "TuFuSearchContract.tsx", "setSelectedContractIds" is NOT defined in "TuFuSearchContract" component scope shown in step 28 view_file?
-        // Step 28 showed: const { selectMultiple, deselectMultiple, isSelected } = useBatch();
-        // It does NOT show "setSelectedContractIds".
-        // BUT Step 28 line 1028: "setSelectedContractIds(new Set());" inside handleSearch.
-        // ERROR: "setSelectedContractIds" is NOT defined in the component based on Step 28 view_file (lines 974-994).
-        // This is a BUG! This would cause the search to crash!
 
-        // I need to check if "setSelectedContractIds" is defined.
-        // In Step 28:
-        // 977: const [currentPage, setCurrentPage] = useState<string>('search-contract');
-        // ...
-        // 990: const { selectMultiple, deselectMultiple, isSelected } = useBatch();
-        // It is NOT defined.
-
-        // Ah, in "AcademicSearchContract" it was probably there or I missed it.
-        // In "TuFuSearchContract", line 1028 calls it.
-        // This crash explains why results don't update/render?
-        // If handleSearch crashes, setRawSearchResults is never called.
-
-        // I need to Fix this bug.
-        // I should use useBatch's "deselectMultiple" or just standard batch clearing if available.
-        // useBatch has { selectMultiple, deselectMultiple, isSelected }. It might have "clearSelection"?
-        // I will check BatchContext.tsx later if needed, but for now I can just remove the invalid call or use deselectMultiple correctly.
-        // Actually, if I want to clear selection on search, I should probably calculate all currently selected IDs that are in the results (or just clear all).
-        // For now, I will comment out setSelectedContractIds(new Set()).
-
-        console.log('Current contracts state:', contracts.length);
-        setSearchContractType(criteria.contractTargetType);
-        // setSelectedContractIds(new Set());
+        if (criteria.contractTargetType !== searchContractType) {
+            setSearchContractType(criteria.contractTargetType);
+            if (criteria.contractTargetType === 'taiwan_book') {
+                setVisibleColumns(new Set(taiwaneseBookColumnConfig.defaultVisible));
+                setDisplayedColumns([...taiwaneseBookColumnConfig.defaultVisible]);
+            } else {
+                setVisibleColumns(new Set(columnConfig.defaultVisible));
+                setDisplayedColumns([...columnConfig.defaultVisible]);
+            }
+        }
 
         let results = [...contracts];
 
@@ -1097,12 +1150,12 @@ const DDDSearchContract: React.FC = () => {
     };
 
     const filteredSelectableColumns = useMemo(() => {
+        if (searchContractType === 'taiwan_book') {
+            return taiwaneseBookColumnConfig.selectable;
+        }
         if (!searchContractType) return columnConfig.selectable;
         if (searchContractType === 'e-content') {
             return columnConfig.selectable.filter(group => group.group !== '台版書採購/帳務相關');
-        }
-        if (searchContractType === 'taiwaneseBook') {
-            return columnConfig.selectable.filter(group => !group.group.startsWith('電子書權利'));
         }
         return columnConfig.selectable;
     }, [searchContractType]);
@@ -1400,7 +1453,7 @@ const DDDSearchContract: React.FC = () => {
             </main>
 
             <FilterDrawer isOpen={isFilterDrawerOpen} onClose={() => setIsFilterDrawerOpen(false)} activeFilters={activeFilters} onFilterChange={setActiveFilters} searchContractType={searchContractType} />
-            <ColumnSelector isOpen={showColumnSelector} onClose={() => setShowColumnSelector(false)} visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} selectableColumns={filteredSelectableColumns} />
+            <ColumnSelector isOpen={showColumnSelector} onClose={() => setShowColumnSelector(false)} visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} selectableColumns={filteredSelectableColumns} searchContractType={searchContractType} />
 
             {message.show && (<div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg text-white shadow-lg z-[100] ${message.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>{message.message}</div>)}
         </div>

@@ -87,9 +87,9 @@ export const fieldConfig: { [sectionId: string]: FormFieldConfig[] } = {
     ],
     'termination-info': [
         { id: 'isTerminated', label: '解約', type: 'radio', options: ['是', '否'] },
-        { id: 'terminationReason', label: '解約原因', type: 'text', condition: (formData: ContractData) => formData.terminationInfo?.isTerminated === '是' },
-        { id: 'terminationDate', label: '解約日期', type: 'date', condition: (formData: ContractData) => formData.terminationInfo?.isTerminated === '是' },
-        { id: 'terminationMethod', label: '解約方式', type: 'text', condition: (formData: ContractData) => formData.terminationInfo?.isTerminated === '是' },
+        { id: 'terminationReason', label: '解約原因', type: 'text', condition: (formData: ContractData) => formData.contractType === 'journal_proceedings' && formData.terminationInfo?.isTerminated === '是' },
+        { id: 'terminationDate', label: '解約日期', type: 'date', condition: (formData: ContractData) => formData.contractType === 'journal_proceedings' && formData.terminationInfo?.isTerminated === '是' },
+        { id: 'terminationMethod', label: '解約方式', type: 'text', condition: (formData: ContractData) => formData.contractType === 'journal_proceedings' && formData.terminationInfo?.isTerminated === '是' },
     ],
     'remarks': [
         { id: 'remarks', label: '', type: 'textarea' },

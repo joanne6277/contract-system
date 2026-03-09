@@ -61,9 +61,19 @@ export interface RemittanceInfoItem {
     paymentReceiptFlow: string;
 }
 
-// 學發部 ContractData
-export interface ContractData {
+export type AcademicContractType = 'journal_proceedings' | 'personal_auth';
+
+export interface BaseAcademicContract {
     id?: string;
+    contractType: AcademicContractType;
+    remarks: string;
+    scanFile?: File | string | null;
+    createdAt?: Date;
+    maintenanceHistory?: unknown[];
+}
+
+export interface JournalProceedingsContract extends BaseAcademicContract {
+    contractType: 'journal_proceedings';
     contractTarget: {
         publicationId: string;
         type: string;
@@ -134,12 +144,11 @@ export interface ContractData {
         terminationMethod: string;
     };
     royaltyInfo: DateScheme[];
-    remarks: string;
-    scanFile?: File | string | null;
-    createdAt?: Date;
-    maintenanceHistory?: unknown[];
-    // 個人授權專用欄位
-    personalAuthInfo?: {
+}
+
+export interface PersonalAuthContract extends BaseAcademicContract {
+    contractType: 'personal_auth';
+    personalAuthInfo: {
         publicationId: string;
         type: string;
         contractNo: string;
@@ -157,8 +166,10 @@ export interface ContractData {
         address: string;
         docid: string;
     };
-    personalAuthRoyaltyInfo?: PersonalAuthRoyaltyScheme[];
+    personalAuthRoyaltyInfo: PersonalAuthRoyaltyScheme[];
 }
+
+export type ContractData = JournalProceedingsContract | PersonalAuthContract;
 
 export interface SearchColumn {
     id: string;

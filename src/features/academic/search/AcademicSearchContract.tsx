@@ -67,8 +67,9 @@ interface ColumnSelectorProps {
 // --- 設定與型別定義 ---
 
 // --- 型別定義 ---
-interface ChangeDetail {
+import type { ContractData, VolumeIdentifier, VolumeRule, DateScheme, EmbargoRule } from '@/features/academic/types';
 
+interface ChangeDetail {
     field: string;
     oldValue: any;
     newValue: any;
@@ -79,131 +80,6 @@ interface MaintenanceRecord {
     userId: string;
     userName: string;
     changes: ChangeDetail[];
-}
-
-interface VolumeIdentifier {
-    format: 'volume_issue' | 'year_month' | 'text';
-    volume: string;
-    issue: string;
-    year: string;
-    month: string;
-    description: string;
-}
-
-interface VolumeRule {
-    id: string;
-    startVolumeInfo: VolumeIdentifier;
-    endVolumeInfo: VolumeIdentifier;
-    unit: string;
-    authorProfitPercentage: string;
-    agentProfitPercentage: string;
-    apProfitPercentage: string;
-    other: string;
-}
-
-interface DateScheme {
-    id: string;
-    startDate: string;
-    endDate: string;
-    volumeRules: VolumeRule[];
-}
-
-interface EmbargoRule {
-    id: string;
-    target: string;
-    period: string;
-}
-
-// 加入新欄位的資料結構
-interface ContractData {
-    id?: string;
-    contractTarget: {
-        publicationId: string;
-        type: string;
-        title: string;
-        volumeInfo: string;
-        issnIsbn: string;
-    };
-    registrationInfo: {
-        managementNo: string;
-        departmentNo: string;
-        departmentSubNo: string;
-        collector: string;
-        asResponsible: string;
-        isCurrent: '是' | '否';
-        contractVersion: string[];
-        nonAiritiVersion: string;
-    };
-    basicInfo: {
-        partyARep: string;
-        partyBRep: string;
-        contractParty: string;
-        contractStartDate: string;
-        contractEndDate: string;
-        autoRenewYears: string;
-        autoRenewFrequency: string;
-        thereafter: '是' | '否';
-        specialDateInfo: string;
-    };
-    rightsInfo: {
-        authorizationFormMain: string;
-        authorizationFormSub: string;
-        paymentType: '有償' | '無償';
-        isOpenAccess: '有' | '無';
-    };
-    scopeInfo: {
-        thirdPartyPlatform_tws: '上_TWS' | '不上_TWS';
-        thirdPartyPlatform_consent: string[];
-        discoverySystem_selectionType: '全選' | '單選' | '各平台皆不上架';
-        discoverySystem_futurePlatforms: '含將來合作平台' | '僅包含現行合作平台';
-        discoverySystem_includeCN: '含CN' | '不含CN';
-        discoverySystem_platforms: string[];
-        discoverySystem_consent: string[];
-        comparisonSystem: '是' | '否';
-        nclClause_selectionType: '不上' | 'Embargo';
-        nclClause_doNotList: string[];
-        nclClause_embargoRules: EmbargoRule[];
-        listingLocation: '全球用戶' | '不上CN' | '不上CN含港澳';
-        status_al_cn: string;
-    };
-    otherClauses: {
-        usageRightsWarranty: '保證+甲方賠償' | '保證+甲方不賠' | '未保證';
-        userRightsProtection: '是' | '否';
-        terminationClause: '是' | '否';
-        forceMajeure: '是' | '否';
-        confidentiality: '是' | '否';
-        noOaOnOwnWebsite: '是' | '否';
-        legalIssueHandling: '甲方' | '乙方' | '雙方' | '法律解決';
-        manuscriptAgreementMention: '是' | '否';
-        authorizationCopy: '是' | '否';
-        damages_hasClause: '是' | '否';
-        damages_description: string;
-    };
-    remittanceInfo: {
-        accountType: '國內' | '海外';
-        accountName: string;
-        checkTitle: string;
-        currency: string;
-        bankName: string;
-        branchName: string;
-        accountNumber: string;
-        accountNotes: string;
-        taxId: string;
-        idNumber: string;
-        royaltySettlementMonth: string;
-        paymentReceiptFlow: string;
-    };
-    terminationInfo: {
-        isTerminated: '是' | '否';
-        terminationReason: string;
-        terminationDate: string;
-        terminationMethod: string;
-    };
-    royaltyInfo: DateScheme[];
-    remarks: string;
-    scanFile?: File | string | null;
-    createdAt?: Date;
-    maintenanceHistory?: MaintenanceRecord[];
 }
 
 interface SearchCriteria {
@@ -306,6 +182,39 @@ const columnConfig = {
                 { id: 'otherClauses.forceMajeure', label: '不可抗力條款' },
                 { id: 'otherClauses.confidentiality', label: '保密條款' },
                 { id: 'remarks.remarks', label: '備註' },
+            ]
+        }
+    ]
+};
+
+// --- 個人授權顯示欄位設定 ---
+const personalAuthColumnConfig = {
+    defaultVisible: [
+        'personalAuthInfo.publicationId',
+        'personalAuthInfo.contractNo',
+        'personalAuthInfo.authorName',
+        'personalAuthInfo.articleTitle',
+        'personalAuthInfo.journalName',
+        'personalAuthInfo.volumeIssue',
+        'personalAuthRoyaltyInfo',
+        'personalAuthInfo.authorizationDate',
+        'personalAuthInfo.authorizationStatus',
+        'personalAuthInfo.authorizationRegion',
+    ],
+    selectable: [
+        {
+            group: '個人授權資訊',
+            columns: [
+                { id: 'personalAuthInfo.publicationId', label: 'PublicationID' },
+                { id: 'personalAuthInfo.contractNo', label: '合約編號' },
+                { id: 'personalAuthInfo.authorName', label: '作者' },
+                { id: 'personalAuthInfo.articleTitle', label: '論文名稱' },
+                { id: 'personalAuthInfo.journalName', label: '期刊名稱' },
+                { id: 'personalAuthInfo.volumeIssue', label: '卷期' },
+                { id: 'personalAuthRoyaltyInfo', label: '權利金比例' },
+                { id: 'personalAuthInfo.authorizationDate', label: '授權日期' },
+                { id: 'personalAuthInfo.authorizationStatus', label: '授權狀態' },
+                { id: 'personalAuthInfo.authorizationRegion', label: '授權地區' },
             ]
         }
     ]
@@ -451,6 +360,16 @@ const tocSections = [
     { id: 'maintenance-history', title: '維護歷程' },
 ];
 
+const personalAuthTocSections = [
+    { id: 'pa-registration-info', title: '造冊資訊與合約標的' },
+    { id: 'pa-rights-info', title: '授權狀態與地區' },
+    { id: 'pa-royalty-info', title: '權利金比例' },
+    { id: 'pa-other-info', title: '其他聯絡資訊' },
+    { id: 'scan-file', title: '合約掃描檔' },
+    { id: 'remarks', title: '備註' },
+    { id: 'maintenance-history', title: '維護歷程' },
+];
+
 const volumeRuleFieldKeyToNameMap: { [key in keyof Omit<VolumeRule, 'id' | 'startVolumeInfo' | 'endVolumeInfo'>]: string } = {
     'unit': '單位(%)',
     'authorProfitPercentage': '作者(%)',
@@ -464,10 +383,10 @@ const volumeRuleFieldKeyToNameMap: { [key in keyof Omit<VolumeRule, 'id' | 'star
 
 
 // --- 新增元件 ---
-const FloatingTOC: React.FC<{ onJump: (id: string) => void }> = ({ onJump }) => {
+const FloatingTOC: React.FC<{ onJump: (id: string) => void, sections: { id: string, title: string }[] }> = ({ onJump, sections }) => {
     const [isTocOpen, setIsTocOpen] = useState(false);
     if (!isTocOpen) return (<div className="fixed top-32 right-5 z-40"><button onClick={() => setIsTocOpen(true)} className="bg-white p-2.5 rounded-l-lg shadow-lg border border-gray-200 border-r-0 hover:bg-gray-50" aria-label="開啟目錄"><Menu className="w-5 h-5 text-gray-600" /></button></div>);
-    return (<div className="fixed top-32 right-5 z-40 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 w-48 transition-all duration-300"><div className="flex justify-between items-center p-2 border-b border-gray-200"><h3 className="font-semibold text-sm text-gray-800">章節目錄</h3><button onClick={() => setIsTocOpen(false)} className="text-gray-400 hover:text-gray-700"><X className="w-4 h-4" /></button></div><nav><ul className="py-1">{tocSections.map(section => (<li key={section.id}><a href={`#${section.id}`} onClick={(e) => { e.preventDefault(); onJump(section.id); }} className="block px-3 py-1.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors rounded-md mx-1">{section.title}</a></li>))}</ul></nav></div>);
+    return (<div className="fixed top-32 right-5 z-40 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 w-48 transition-all duration-300"><div className="flex justify-between items-center p-2 border-b border-gray-200"><h3 className="font-semibold text-sm text-gray-800">章節目錄</h3><button onClick={() => setIsTocOpen(false)} className="text-gray-400 hover:text-gray-700"><X className="w-4 h-4" /></button></div><nav><ul className="py-1">{sections.map(section => (<li key={section.id}><a href={`#${section.id}`} onClick={(e) => { e.preventDefault(); onJump(section.id); }} className="block px-3 py-1.5 text-sm text-gray-700 hover:bg-indigo-50 transition-colors rounded-md mx-1">{section.title}</a></li>))}</ul></nav></div>);
 };
 
 const getInitialVolumeIdentifier = (): VolumeIdentifier => ({ format: 'volume_issue', volume: '', issue: '', year: '', month: '', description: '' });
@@ -656,6 +575,7 @@ const AcademicDeptContractModule: React.FC = () => {
     const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(columnConfig.defaultVisible));
     const [expandedRoyaltyRows, setExpandedRoyaltyRows] = useState<Set<string>>(new Set());
     const [sortConfig, setSortConfig] = useState<{ key: string | null; direction: 'ascending' | 'descending' }>({ key: null, direction: 'ascending' });
+    const [lastSearchType, setLastSearchType] = useState<string>('');
     const [displayedColumns, setDisplayedColumns] = useState<string[]>(columnConfig.defaultVisible);
     const dragItem = useRef<number | null>(null);
     const dragOverItem = useRef<number | null>(null);
@@ -670,7 +590,8 @@ const AcademicDeptContractModule: React.FC = () => {
     }, []);
 
     // Effect to sync royalty dates with main contract dates for new contracts
-    const allColumns = useMemo(() => [...columnConfig.selectable.flatMap(g => g.columns)], []);
+    const activeColumnConfig = lastSearchType === '個人授權' ? personalAuthColumnConfig : columnConfig;
+    const allColumns = useMemo(() => [...activeColumnConfig.selectable.flatMap(g => g.columns)], [activeColumnConfig]);
 
     useEffect(() => {
         setDisplayedColumns(prevOrder => {
@@ -725,18 +646,73 @@ const AcademicDeptContractModule: React.FC = () => {
     const handleSearch = useCallback((criteria: SearchCriteria) => {
         let results = [...contracts];
         if (criteria.rollbackDate) { results = results.map(c => getContractSnapshot(c, criteria.rollbackDate)); }
-        if (criteria.keyword) { const lowerKeyword = criteria.keyword.toLowerCase(); results = results.filter(c => (c.contractTarget.publicationId?.toLowerCase().includes(lowerKeyword) || c.contractTarget.title?.toLowerCase().includes(lowerKeyword) || c.registrationInfo.managementNo?.toLowerCase().includes(lowerKeyword) || c.registrationInfo.departmentNo?.toLowerCase().includes(lowerKeyword) || c.registrationInfo.departmentSubNo?.toLowerCase().includes(lowerKeyword) || c.basicInfo.contractParty?.toLowerCase().includes(lowerKeyword))); }
-        if (criteria.contractType) { results = results.filter(c => c.contractTarget.type === criteria.contractType); }
-        if (criteria.startDate && criteria.endDate) {
-            const searchStart = new Date(criteria.startDate); const searchEnd = new Date(criteria.endDate); results = results.filter(c => {
-                const contractStart = new Date(c.basicInfo.contractStartDate); const contractEnd = new Date(c.basicInfo.contractEndDate); if (!c.basicInfo.contractStartDate || !c.basicInfo.contractEndDate) return false; switch (criteria.dateMode) {
-                    case 'starts': return contractStart >= searchStart && contractStart <= searchEnd;
-                    case 'ends': return contractEnd >= searchStart && contractEnd <= searchEnd;
-                    case 'effective': return contractStart <= searchEnd && contractEnd >= searchStart;
-                    case 'within': return contractStart >= searchStart && contractEnd <= searchEnd;
-                    default: return true;
+        // 依合約類型篩選
+        if (criteria.contractType) {
+            results = results.filter(c => {
+                if (criteria.contractType === '個人授權') {
+                    return c.contractType === 'personal_auth';
+                } else {
+                    return c.contractType === 'journal_proceedings' && (c as JournalProceedingsContract).contractTarget?.type === criteria.contractType;
                 }
             });
+        }
+        // 關鍵字搜尋：個人授權搜尋不同欄位
+        if (criteria.keyword) {
+            const lowerKeyword = criteria.keyword.toLowerCase();
+            if (criteria.contractType === '個人授權') {
+                results = results.filter(c => {
+                    const pa = c as PersonalAuthContract;
+                    return (
+                        pa.personalAuthInfo?.publicationId?.toLowerCase().includes(lowerKeyword) ||
+                        pa.personalAuthInfo?.authorName?.toLowerCase().includes(lowerKeyword) ||
+                        pa.personalAuthInfo?.articleTitle?.toLowerCase().includes(lowerKeyword) ||
+                        pa.personalAuthInfo?.journalName?.toLowerCase().includes(lowerKeyword)
+                    );
+                });
+            } else {
+                results = results.filter(c => {
+                    const jp = c as JournalProceedingsContract;
+                    return (jp.contractTarget?.publicationId?.toLowerCase().includes(lowerKeyword) ||
+                        jp.contractTarget?.title?.toLowerCase().includes(lowerKeyword) ||
+                        jp.registrationInfo?.managementNo?.toLowerCase().includes(lowerKeyword) ||
+                        jp.registrationInfo?.departmentNo?.toLowerCase().includes(lowerKeyword) ||
+                        jp.registrationInfo?.departmentSubNo?.toLowerCase().includes(lowerKeyword) ||
+                        jp.basicInfo?.contractParty?.join(',').toLowerCase().includes(lowerKeyword));
+                });
+            }
+        }
+        // 日期篩選：個人授權用 authorizationDate，其他用合約起迄日
+        if (criteria.startDate && criteria.endDate) {
+            const searchStart = new Date(criteria.startDate); const searchEnd = new Date(criteria.endDate);
+            if (criteria.contractType === '個人授權') {
+                results = results.filter(c => {
+                    const pa = c as PersonalAuthContract;
+                    const authDate = pa.personalAuthInfo?.authorizationDate ? new Date(pa.personalAuthInfo.authorizationDate) : null;
+                    if (!authDate) return false;
+                    return authDate >= searchStart && authDate <= searchEnd;
+                });
+            } else {
+                results = results.filter(c => {
+                    const jp = c as JournalProceedingsContract;
+                    if (!jp.basicInfo?.contractStartDate || !jp.basicInfo?.contractEndDate) return false;
+                    const contractStart = new Date(jp.basicInfo.contractStartDate); const contractEnd = new Date(jp.basicInfo.contractEndDate); switch (criteria.dateMode) {
+                        case 'starts': return contractStart >= searchStart && contractStart <= searchEnd;
+                        case 'ends': return contractEnd >= searchStart && contractEnd <= searchEnd;
+                        case 'effective': return contractStart <= searchEnd && contractEnd >= searchStart;
+                        case 'within': return contractStart >= searchStart && contractEnd <= searchEnd;
+                        default: return true;
+                    }
+                });
+            }
+        }
+        // 儲存搜尋類型並切換欄位
+        setLastSearchType(criteria.contractType);
+        if (criteria.contractType === '個人授權') {
+            setVisibleColumns(new Set(personalAuthColumnConfig.defaultVisible));
+            setDisplayedColumns(personalAuthColumnConfig.defaultVisible);
+        } else {
+            setVisibleColumns(new Set(columnConfig.defaultVisible));
+            setDisplayedColumns(columnConfig.defaultVisible);
         }
         setRawSearchResults(results); setActiveFilters({}); navigateTo('search-results');
     }, [contracts, getContractSnapshot]);
@@ -933,7 +909,7 @@ const AcademicDeptContractModule: React.FC = () => {
             .filter(c => c.id !== undefined)
             .map(c => ({
                 id: c.id!,
-                label: c.contractTarget?.title || 'Unknown Contract',
+                label: c.contractType === 'personal_auth' ? (c as PersonalAuthContract).personalAuthInfo?.articleTitle : (c as JournalProceedingsContract).contractTarget?.title || 'Unknown Contract',
                 data: c,
                 type: 'academic' as const
             }));
@@ -979,6 +955,9 @@ const AcademicDeptContractModule: React.FC = () => {
             case 'scopeInfo.nclClause': return <TruncatedText text={getFieldValue(contract, 'scopeInfo.nclClause_selectionType')} maxLength={25} />;
             case 'remarks.remarks': return <TruncatedText text={getFieldValue(contract, 'remarks')} maxLength={40} />;
             case 'registrationInfo.contractVersion': return <TruncatedText text={Array.isArray(value) ? value.join(', ') : value} maxLength={20} />;
+            // 個人授權欄位
+            case 'personalAuthInfo.articleTitle': return <button onClick={() => showContractDetail(contract)} className="text-indigo-600 hover:text-indigo-900 font-medium text-left"><TruncatedText text={value} maxLength={30} /></button>;
+            case 'personalAuthRoyaltyInfo': return <button onClick={() => toggleRoyaltyRow(contract.id!)} className="px-2 py-1 text-xs text-indigo-700 bg-indigo-100 rounded-md hover:bg-indigo-200">查看</button>;
             default:
                 const displayValue = (value !== null && value !== undefined && value !== '') ? String(value) : '';
                 return <TruncatedText text={displayValue} maxLength={20} />;
@@ -996,7 +975,7 @@ const AcademicDeptContractModule: React.FC = () => {
                 animation: fade-in-up 0.3s ease-out forwards;
             }
         `}</style>
-            {['contract-detail'].includes(currentPage) && (<FloatingTOC onJump={handleTocJump} />)}
+            {['contract-detail'].includes(currentPage) && currentContract && (<FloatingTOC onJump={handleTocJump} sections={currentContract.contractType === 'personal_auth' ? personalAuthTocSections : tocSections} />)}
 
             <main ref={mainContentRef} className="container mx-auto p-8" style={{ maxHeight: 'calc(100vh - 80px)', overflowY: 'auto' }}>
                 {currentPage === 'search-contract' && (<SearchPage onSearch={handleSearch} />)}
@@ -1010,8 +989,12 @@ const AcademicDeptContractModule: React.FC = () => {
                                     <p className="text-sm text-gray-500 mt-1">找到 {searchResults.length} 筆合約</p>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <Button variant="ghost" onClick={() => setIsFilterDrawerOpen(true)} className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100"><Filter size={16} className="mr-2" />進階篩選</Button>
-                                    <Button variant="ghost" onClick={() => setShowColumnSelector(true)} className="border border-gray-300 text-gray-700 hover:bg-gray-50"><Columns size={16} className="mr-2" />篩選顯示欄位</Button>
+                                    {lastSearchType !== '個人授權' && (
+                                        <Button variant="ghost" onClick={() => setIsFilterDrawerOpen(true)} className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100"><Filter size={16} className="mr-2" />進階篩選</Button>
+                                    )}
+                                    {lastSearchType !== '個人授權' && (
+                                        <Button variant="ghost" onClick={() => setShowColumnSelector(true)} className="border border-gray-300 text-gray-700 hover:bg-gray-50"><Columns size={16} className="mr-2" />篩選顯示欄位</Button>
+                                    )}
                                     <Button variant="ghost" onClick={() => navigateTo('search-contract')} className="border border-gray-300 text-gray-700 hover:bg-gray-50">返回搜尋</Button>
                                 </div>
                             </div>
@@ -1078,14 +1061,28 @@ const AcademicDeptContractModule: React.FC = () => {
                                                                 <h4 className="font-semibold mb-2 text-indigo-800">權利金比例詳情</h4>
                                                                 <div className="overflow-x-auto">
                                                                     <table className="min-w-full text-xs bg-white rounded-md">
-                                                                        <thead className="bg-gray-100"><tr><th className="p-2 border">日期方案</th><th className="p-2 border">卷期規則</th><th className="p-2 border">單位(%)</th><th className="p-2 border">作者(%)</th><th className="p-2 border">代理商(%)</th><th className="p-2 border">AP(%)</th><th className="p-2 border">其他</th></tr></thead>
+                                                                        {contract.contractType === 'personal_auth' ? (
+                                                                            <thead className="bg-gray-100"><tr><th className="p-2 border">日期方案</th><th className="p-2 border">分潤對象</th><th className="p-2 border">比例(%)</th></tr></thead>
+                                                                        ) : (
+                                                                            <thead className="bg-gray-100"><tr><th className="p-2 border">日期方案</th><th className="p-2 border">卷期規則</th><th className="p-2 border">單位(%)</th><th className="p-2 border">作者(%)</th><th className="p-2 border">代理商(%)</th><th className="p-2 border">AP(%)</th><th className="p-2 border">其他</th></tr></thead>
+                                                                        )}
                                                                         <tbody>
-                                                                            {(contract.royaltyInfo || []).map(scheme => (scheme.volumeRules || []).map((rule, rIndex) => (
-                                                                                <tr key={rule.id}>
-                                                                                    {rIndex === 0 && <td rowSpan={scheme.volumeRules.length} className="p-2 border align-top">{`${scheme.startDate || ''} ~ ${scheme.endDate || ''}`}</td>}
-                                                                                    <td className="p-2 border align-top">{`${formatVolumeIdentifier(rule.startVolumeInfo)} ~ ${formatVolumeIdentifier(rule.endVolumeInfo)}`}</td><td className="p-2 border align-top">{rule.unit}</td><td className="p-2 border align-top">{rule.authorProfitPercentage}</td><td className="p-2 border align-top">{rule.agentProfitPercentage}</td><td className="p-2 border align-top">{rule.apProfitPercentage}</td><td className="p-2 border align-top">{rule.other}</td>
-                                                                                </tr>
-                                                                            )))}
+                                                                            {contract.contractType === 'personal_auth' ? (
+                                                                                (contract as PersonalAuthContract).personalAuthRoyaltyInfo?.map(scheme => (scheme.royaltySplits || []).map((split, sIndex) => (
+                                                                                    <tr key={split.id}>
+                                                                                        {sIndex === 0 && <td rowSpan={scheme.royaltySplits.length} className="p-2 border align-top">{`${scheme.startDate || ''} ~ ${scheme.endDate || ''}`}</td>}
+                                                                                        <td className="p-2 border align-top">{split.beneficiary || '(空白)'}</td>
+                                                                                        <td className="p-2 border align-top">{split.percentage || '(空白)'}%</td>
+                                                                                    </tr>
+                                                                                )))
+                                                                            ) : (
+                                                                                ((contract as JournalProceedingsContract).royaltyInfo || []).map(scheme => (scheme.volumeRules || []).map((rule, rIndex) => (
+                                                                                    <tr key={rule.id}>
+                                                                                        {rIndex === 0 && <td rowSpan={scheme.volumeRules.length} className="p-2 border align-top">{`${scheme.startDate || ''} ~ ${scheme.endDate || ''}`}</td>}
+                                                                                        <td className="p-2 border align-top">{`${formatVolumeIdentifier(rule.startVolumeInfo)} ~ ${formatVolumeIdentifier(rule.endVolumeInfo)}`}</td><td className="p-2 border align-top">{rule.unit}</td><td className="p-2 border align-top">{rule.authorProfitPercentage}</td><td className="p-2 border align-top">{rule.agentProfitPercentage}</td><td className="p-2 border align-top">{rule.apProfitPercentage}</td><td className="p-2 border align-top">{rule.other}</td>
+                                                                                    </tr>
+                                                                                )))
+                                                                            )}
                                                                         </tbody>
                                                                     </table>
                                                                 </div>
@@ -1105,7 +1102,9 @@ const AcademicDeptContractModule: React.FC = () => {
                 {currentPage === 'contract-detail' && currentContract && (
                     <div className="bg-white rounded-xl shadow-lg p-8">
                         <div className="flex justify-between items-center mb-8">
-                            <h2 className="text-2xl font-bold text-gray-800">合約詳目: {currentContract.contractTarget?.title}</h2>
+                            <h2 className="text-2xl font-bold text-gray-800">
+                                合約詳目: {currentContract.contractType === 'personal_auth' ? (currentContract as PersonalAuthContract).personalAuthInfo?.articleTitle : (currentContract as JournalProceedingsContract).contractTarget?.title}
+                            </h2>
                             <div className="space-x-4">
                                 <Button
                                     onClick={() => navigate(`/academic/contract/${currentContract.id}`)}
@@ -1117,9 +1116,41 @@ const AcademicDeptContractModule: React.FC = () => {
                                 <Button variant="ghost" onClick={() => navigateTo('search-results')} className="border border-gray-300 text-gray-700 hover:bg-gray-50">回上一頁</Button>
                             </div>
                         </div>
-                        <div className="space-y-8">{tocSections.map(section => {
-                            if (section.id === 'scope-info') { return <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6"><h3 className="text-lg font-semibold text-gray-800 mb-4">{section.title}</h3>{renderScopeInfoDetail(currentContract.scopeInfo)}</div>; }
-                            if (section.id === 'royalty-info') { return (<div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6"><h3 className="text-lg font-semibold text-gray-800 mb-4">{section.title}</h3><div className="overflow-x-auto"><table className="min-w-full text-sm"><thead className="bg-gray-50"><tr><th className="p-2 border">日期方案</th><th className="p-2 border">卷期規則</th><th className="p-2 border">單位(%)</th><th className="p-2 border">作者(%)</th><th className="p-2 border">代理商(%)</th><th className="p-2 border">AP(%)</th><th className="p-2 border">其他</th></tr></thead><tbody className="divide-y divide-gray-200">{(currentContract.royaltyInfo || []).map((scheme, sIndex) => ((scheme.volumeRules || []).map((rule, rIndex) => (<tr key={rule.id}>{rIndex === 0 && (<td rowSpan={scheme.volumeRules.length} className="p-2 border align-top">{`${scheme.startDate || ''} ~ ${scheme.endDate || ''}`}</td>)}<td className="p-2 border align-top">{`${formatVolumeIdentifier(rule.startVolumeInfo)} ~ ${formatVolumeIdentifier(rule.endVolumeInfo)}`}</td><td className="p-2 border align-top">{rule.unit}</td><td className="p-2 border align-top">{rule.authorProfitPercentage}</td><td className="p-2 border align-top">{rule.agentProfitPercentage}</td><td className="p-2 border align-top">{rule.apProfitPercentage}</td><td className="p-2 border align-top">{rule.other}</td></tr>))))}</tbody></table></div></div>); }
+                        <div className="space-y-8">{(currentContract.contractType === 'personal_auth' ? personalAuthTocSections : tocSections).map(section => {
+                            if (section.id === 'scope-info') { return <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6"><h3 className="text-lg font-semibold text-gray-800 mb-4">{section.title}</h3>{renderScopeInfoDetail((currentContract as JournalProceedingsContract).scopeInfo)}</div>; }
+                            if (section.id === 'royalty-info') { return (<div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6"><h3 className="text-lg font-semibold text-gray-800 mb-4">{section.title}</h3><div className="overflow-x-auto"><table className="min-w-full text-sm"><thead className="bg-gray-50"><tr><th className="p-2 border">日期方案</th><th className="p-2 border">卷期規則</th><th className="p-2 border">單位(%)</th><th className="p-2 border">作者(%)</th><th className="p-2 border">代理商(%)</th><th className="p-2 border">AP(%)</th><th className="p-2 border">其他</th></tr></thead><tbody className="divide-y divide-gray-200">{((currentContract as JournalProceedingsContract).royaltyInfo || []).map((scheme, sIndex) => ((scheme.volumeRules || []).map((rule, rIndex) => (<tr key={rule.id}>{rIndex === 0 && (<td rowSpan={scheme.volumeRules.length} className="p-2 border align-top">{`${scheme.startDate || ''} ~ ${scheme.endDate || ''}`}</td>)}<td className="p-2 border align-top">{`${formatVolumeIdentifier(rule.startVolumeInfo)} ~ ${formatVolumeIdentifier(rule.endVolumeInfo)}`}</td><td className="p-2 border align-top">{rule.unit}</td><td className="p-2 border align-top">{rule.authorProfitPercentage}</td><td className="p-2 border align-top">{rule.agentProfitPercentage}</td><td className="p-2 border align-top">{rule.apProfitPercentage}</td><td className="p-2 border align-top">{rule.other}</td></tr>))))}</tbody></table></div></div>); }
+                            if (section.id === 'pa-royalty-info') {
+                                const paRoyaltyInfo = (currentContract as PersonalAuthContract).personalAuthRoyaltyInfo || [];
+                                return (
+                                    <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6">
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.title}</h3>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full text-sm">
+                                                <thead className="bg-gray-50"><tr><th className="p-2 border">日期方案</th><th className="p-2 border">分潤對象</th><th className="p-2 border">比例(%)</th></tr></thead>
+                                                <tbody className="divide-y divide-gray-200">
+                                                    {paRoyaltyInfo.length === 0 ? (
+                                                        <tr><td colSpan={3} className="text-center p-4">查無資料</td></tr>
+                                                    ) : (
+                                                        paRoyaltyInfo.map((scheme) => (
+                                                            scheme.royaltySplits.map((split, sIndex) => (
+                                                                <tr key={split.id}>
+                                                                    {sIndex === 0 && (
+                                                                        <td rowSpan={scheme.royaltySplits.length || 1} className="p-2 border text-center align-middle">
+                                                                            {`${scheme.startDate || ''} ~ ${scheme.endDate || ''}`}
+                                                                        </td>
+                                                                    )}
+                                                                    <td className="p-2 border text-center">{split.beneficiary || '(空白)'}</td>
+                                                                    <td className="p-2 border text-center">{split.percentage || '(空白)'}%</td>
+                                                                </tr>
+                                                            ))
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            }
                             if (section.id === 'scan-file') { return (<div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6"><h3 className="text-lg font-semibold text-gray-800 mb-4">{section.title}</h3><div className="flex items-center gap-3 text-gray-900"><FileText size={18} /> <span>{getFileName(currentContract.scanFile)}</span></div></div>) }
                             if (section.id === 'remarks') { return (<div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6"><h3 className="text-lg font-semibold text-gray-800 mb-4">{section.title}</h3><p className="text-gray-800 whitespace-pre-wrap">{currentContract.remarks || 'N/A'}</p></div>) }
                             if (section.id === 'maintenance-history') {
@@ -1196,19 +1227,21 @@ const AcademicDeptContractModule: React.FC = () => {
 
 const SearchPage: React.FC<{ onSearch: (criteria: SearchCriteria) => void }> = ({ onSearch }) => {
     const navigate = useNavigate();
-    const [criteria, setCriteria] = useState<SearchCriteria>({ keyword: '', contractType: '', dateMode: 'effective', startDate: '', endDate: '', rollbackDate: '' });
+    const [criteria, setCriteria] = useState<SearchCriteria>({ keyword: '', contractType: '期刊', dateMode: 'effective', startDate: '', endDate: '', rollbackDate: '' });
     const handleInputChange = (field: keyof SearchCriteria, value: string) => { setCriteria(prev => ({ ...prev, [field]: value })); };
     const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSearch(criteria); };
+    const keywordPlaceholder = criteria.contractType === '個人授權'
+        ? '搜尋PublicationID、作者姓名、論文名稱或所屬刊物名稱'
+        : '搜尋 PublicationID, 刊名, 各類編號, 簽約單位...';
     return (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-8 space-y-8">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-800">搜尋合約</h2>
 
             </div>
-            <div><label className="block text-sm font-medium text-gray-700 mb-2">關鍵字</label><input type="text" value={criteria.keyword} onChange={e => handleInputChange('keyword', e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="搜尋 PublicationID, 刊名, 各類編號, 簽約單位..." /></div>
-            <div><label className="block text-sm font-medium text-gray-700 mb-2">合約標的類型</label>
-                <select value={criteria.contractType} onChange={e => handleInputChange('contractType', e.target.value)} className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg">
-                    <option value="">全部</option>
+            <div><label className="block text-sm font-medium text-gray-700 mb-2">關鍵字</label><input type="text" value={criteria.keyword} onChange={e => handleInputChange('keyword', e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder={keywordPlaceholder} /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-2">合約標的類型 <span className="text-red-500">*</span></label>
+                <select value={criteria.contractType} onChange={e => handleInputChange('contractType', e.target.value)} className="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-lg" required>
                     <option value="期刊">期刊</option>
                     <option value="論文集">論文集</option>
                     <option value="個人授權">個人授權</option>

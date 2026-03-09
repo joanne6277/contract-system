@@ -1,7 +1,177 @@
-﻿# 2026-03-02 學發部新增「個人授權」合約類型
+﻿# 2026-03-09 圖服部台版書合約搜尋顯示欄位優化
 
 ## 摘要
-在學術發展部的合約系統中新增「個人授權」合約標的類型。個人授權代表作者與平台單獨簽訂一篇文章的授權，欄位結構與期刊/論文集完全不同，特別是沒有卷期規則的概念。採用 DDD（圖書服務部）的條件渲染模式，依據使用者選擇的「類型」動態顯示/隱藏對應的 TOC 章節和表單欄位。
+依據需求，將圖服部搜尋合約模組中當合約標的類型為「台版書」時，搜尋結果顯示的預設欄位、篩選顯示欄位以及進階篩選區塊進行客製化與優化，能正確呈現台版書專屬資訊。
+
+## 詳細變更內容
+- [修改] `src/features/ddd/search/DDDSearchContract.tsx`
+  - 新增 `taiwaneseBookColumnConfig` 常數定義，供台版書專用：
+    - 設定台版書專用預設欄位 (合約狀態, 【圖服部】台版書合約編號, 出版單位名稱, 華藝合約編號, 合約起訖日, 台版書海外供貨折扣(含稅))。
+    - 設定台版書專用的篩選顯示欄位分類 (`造冊資訊`, `基本資訊`, `帳務相關`) 與對應的次選項。
+  - 修改 `handleSearch` 邏輯，當合約類型為台版書時，動態套用 `taiwaneseBookColumnConfig.defaultVisible` 作為預設顯示欄位。
+  - 修改 `<ColumnSelector>` (篩選顯示欄位對話框)，加入重置邏輯動態判定 `searchContractType` 來「恢復預設」。
+  - 修正了搜尋與合約維護頁面 (`DDDMaintainContract.tsx`, `DDDContract.tsx`) 中的 `contractTargetType`，確保系統正確識別 `taiwan_book`，修復了因版面誤判電子書欄位 (rightsInfo) 造成的頁面白屏/無反應崩潰問題。
+  - **修復學發部（個人授權）維護按鈕崩潰問題**：
+    - 由於 `<AcademicMaintainContract>` 先前並未像 `<AcademicContract>` 一樣實裝個人授權的專屬欄位判斷與過濾邏輯（`visibleTocSections`），導致系統嘗試渲染 `basicInfo` 等不存在的節點並引發 React 崩潰。
+    - 在 `AcademicMaintainContract.tsx` 中移植了 `AcademicContract.tsx` 的動態過濾邏輯，並加入了專屬的 `<PersonalAuthRoyaltyModal>` 元件與權利金邏輯，確保其正確顯示「個人授權」的相應區塊與狀態。
+
+---
+
+# 2026-03-06 學發部搜尋模組：個人授權合約詳目頁面適配
+
+## 摘要
+依據需求，將學發部的搜尋合約模組中的「合約詳目 (contract-detail)」頁面結構，調整為能正確對應並顯示「個人授權」(`personal_auth`) 類型的獨立欄位，並套用與新增合約模組相同的欄位配置。
+
+## 詳細變更內容
+- [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+  - 新增 `personalAuthTocSections` 陣列，定義個人授權專屬的合約章節與標籤 (如 `pa-registration-info`, `pa-rights-info` 等)。
+  - 調整 `FloatingTOC` 導覽目錄元件，改由 `sections` prop 動態傳入該合約類型對應的章節陣列。
+  - 修改 `contract-detail` 的渲染邏輯：
+    - 標題自動切換 (期刊顯示 `title`，個人顯示 `articleTitle`)。
+    - 內容區塊迴圈根據 `contractType` 選擇 `tocSections` 或是 `personalAuthTocSections`。
+    - 調整特例渲染的 `id`，新增對 `pa-royalty-info` (個人授權專用權利金區塊) 的自訂表格渲染，顯示「日期方案 / 分潤對象 / 比例(%)」。
+  - 同步修改主要列表 (search-results) 裡 `royaltyInfo` 欄位點擊「查看」後的展開區塊，使其也能正確顯示個人授權專用的權利金結構 (`personalAuthRoyaltyInfo`)。
+
+---
+
+# 2026-03-06 修復學發部合約搜尋模組錯誤
+## 摘要
+修復學發部合約系統 `AcademicSearchContract.tsx` 中的 `handleSearch` 與 `handleSelectAll` 錯誤。由於新增了個人的 `personal_auth` 類型，原先直接讀取 `contractTarget` 的欄位（如 `.type`, `.publicationId`）會因對 `PersonalAuthContract` 為 `undefined` 而導致應用程式報錯無回應。
+
+## 詳細變更內容
+- [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+  - 更新 `handleSearch` 中的過濾邏輯，利用 `contractType` 正確區分並判斷欄位。
+  - 對舊有的 `contractTarget` 操作補上 `?.`，防止例外拋出。
+  - 更新批次處理選擇物件 `handleSelectAll`，針對不同合約類型給予正確的 `label`。
+
+---
+
+# 2026-03-06 新增個人授權與台版書範本資料 (Mock Data)
+## 摘要
+依據需求，為學發部的「個人授權」以及圖服部的「台版書」分別建立了 5 筆合約範本資料。
+
+## 詳細變更內容
+
+### [修改] `src/data/mockContracts.ts`
+- 新增 5 筆 `PersonalAuthContract` (個人授權) 範本資料 (ID: 11-15)。
+- 包含完整的 `personalAuthInfo` 與 `personalAuthRoyaltyInfo`，並符合最新的 Discriminated Unions 資料結構。
+
+### [修改] `src/data/mockDDDContracts.ts`
+- 新增 5 筆 `TaiwanBookContract` (台版書) 範本資料 (ID: TF-011 到 TF-015)。
+- 包含完整的台版書專屬屬性：`twBookRights`, `twBookAccounting`, `twBookLogistics`, 與 `twBookContact`。
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤。
+
+---
+
+# 2026-03-06 圖服部合約資料結構重構 (Discriminated Unions)
+
+## 摘要
+將圖書服務部合約資料結構 `TuFuContractData` 重構為 TypeScript 的 Discriminated Unions (可辨識聯合型別)，分為 `EbookMagazineContract` (電子書/電子雜誌) 與 `TaiwanBookContract` (台版書)，以提升型別安全並消除冗餘空欄位。
+
+## 詳細變更內容
+
+### [修改] `src/features/ddd/types/index.ts`
+- 建立 `BaseDDDContract` 共用基礎型別
+- 將原有合約分離為 `EbookMagazineContract` (電子書權利、範圍、帳務等) 與 `TaiwanBookContract` (台版書權利、後勤、聯絡人等)
+- 定義 `TuFuContractData = EbookMagazineContract | TaiwanBookContract`，並使用 `contractType` 作為鑑別欄位
+
+### [修改] `src/data/mockDDDContracts.ts`
+- 更新所有 mock data 補上 `contractType`
+- 針對 `contractType === 'ebook_magazine'` 的資料，移除了 `taiwan_book` 的專用欄位，確保資料輕量且符合型別
+
+### [修改] `src/features/ddd/hooks/useDDDContractForm.ts`
+- 在 `getInitialFormData` 中將結構透過 type assertion 設定為符合預期
+- 對共用的 state 操作使用型別轉換以適配 Discriminated Unions 介面
+
+### [修改] `src/pages/DDDContract.tsx` & `src/pages/DDDMaintainContract.tsx`
+- 引入 `EbookMagazineContract` 與 `TaiwanBookContract` 進行型別轉換保護
+- 依據 `contractType` 進行條件渲染時，對 `formData` 使用特定 type alias 進行存取 (例如使用 `ebookData.rightsInfo` 代替原本的 `formData.rightsInfo`)
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤解決原先圖服部的編譯錯誤。
+
+---
+
+# 2026-03-06 學發部合約資料結構重構 (Discriminated Unions)
+
+## 摘要
+將學術發展部合約資料結構 `ContractData` 重構為 TypeScript 的 Discriminated Unions (可辨識聯合型別)，分為 `JournalProceedingsContract` (期刊/論文集) 與 `PersonalAuthContract` (個人授權)，以提升型別安全、消除冗餘空欄位，並簡化條件渲染與驗證邏輯。
+
+## 詳細變更內容
+
+### [修改] `src/features/academic/types/index.ts`
+- 建立 `BaseAcademicContract` 共用基礎型別
+- 將原有合約分離為 `JournalProceedingsContract` (包含完整的權利、範圍、匯款、條款等欄位) 與 `PersonalAuthContract` (包含個人授權專屬欄位及權利金比例)
+- 定義 `ContractData = JournalProceedingsContract | PersonalAuthContract`，並使用 `contractType` 作為鑑別欄位
+
+### [修改] `src/data/mockContracts.ts`
+- 更新所有 mock data 補上 `contractType`
+- 針對 `contractType === 'personal_auth'` 的資料，移除多餘的 `registrationInfo`、`basicInfo`、`rightsInfo` 等不需要的欄位物件，使資料變得更乾淨輕量
+
+### [修改] `src/pages/AcademicContract.tsx` & `src/pages/AcademicMaintainContract.tsx`
+- 在各個需要判斷型別的地方加上 `contractType === 'journal_proceedings'` 型別守衛 (Type Guards) 或進行安全的型別轉換
+- 更新 `getInitialFormData` 預設產生符合 `JournalProceedingsContract` 結構的資料
+
+### [修改] `src/features/academic/constants/fieldConfig.ts`
+- 修正 `condition` 回呼函式的參數存取，先確保型別正確才讀取 `terminationInfo` 等特定合約專屬屬性
+
+### [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+- 移除檔案內自行宣告的過時 `ContractData` 及相關 inline interface
+- 改由 `@/features/academic/types` import 共用型別
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤
+- ✅ Build 建置: `vite build` 成功完成
+
+---
+
+# 2026-03-06 學發部個人授權合約搜尋功能增強
+
+## 摘要
+為學發部搜尋模組新增個人授權合約的完整支援，包括 5 筆範本資料、搜尋介面調整（必填合約類型、動態提示詞）、搜尋結果專用欄位配置、以及隱藏不適用的篩選按鈕。
+
+## 詳細變更內容
+
+### [修改] `src/data/mockContracts.ts`
+- 新增 5 筆個人授權合約範本資料（ID 11-15）
+- 每筆資料包含完整的 `personalAuthInfo` 欄位（publicationId, contractNo, journalName, volumeIssue, articleTitle, authorizationDate, authorizationStatus, authorizationRegion, royaltyUid, authorName, email, phone, address, docid）
+- `contractTarget.type` 設為 `'個人授權'`
+- 涵蓋不同授權狀態：非專個人領取、非專無償、個人領取、捐贈慈善基金會
+- 涵蓋不同授權地區：全球用戶、不上CN
+
+### [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+
+**1. 搜尋表單 (SearchPage 元件)**
+- 合約標的類型改為必填：移除「全部」選項，預設值設為「期刊」，加上 `required` 屬性及紅色星號 (*) 標示
+- 動態關鍵字提示詞：當選擇「個人授權」時，placeholder 改為「搜尋PublicationID、作者姓名、論文名稱或所屬刊物名稱」
+
+**2. 個人授權專用欄位配置 (personalAuthColumnConfig)**
+- 新增 `personalAuthColumnConfig` 常數，定義 10 個預設顯示欄位：PublicationID, 合約編號, 作者, 論文名稱, 期刊名稱, 卷期, 權利金比例, 授權日期, 授權狀態, 授權地區
+
+**3. 搜尋邏輯適配 (handleSearch)**
+- 新增 `lastSearchType` 狀態追蹤搜尋類型
+- 個人授權關鍵字搜尋改為比對 `personalAuthInfo` 內的 publicationId、authorName、articleTitle、journalName
+- 個人授權日期篩選改用 `personalAuthInfo.authorizationDate`
+- 搜尋時自動切換可見欄位至對應配置
+
+**4. 搜尋結果頁面**
+- 當 `lastSearchType === '個人授權'` 時，隱藏「進階篩選」和「篩選顯示欄位」按鈕
+- `allColumns` 和 `activeColumnConfig` 根據搜尋類型動態切換
+- `renderCellContent` 新增個人授權欄位渲染（論文名稱可點擊、權利金比例顯示查看按鈕）
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤
+- ✅ 瀏覽器驗證: 5 筆個人授權資料正確顯示，欄位配置正確，按鈕隱藏正常
+- ✅ 期刊搜尋功能不受影響
+
+---
+
+# 2026-03-02 學發部新增「個人授權」合約類型
+
+## 摘要
+在學術發展部的合約系統中新增「個人授權」合約標的類型。個人授權代表作者與平台單獨簽訂一篇文章的授權，權利金欄位結構與期刊/論文集完全不同，特別是沒有卷期規則的概念。採用 DDD（圖書服務部）的條件渲染模式，依據使用者選擇的「類型」動態顯示/隱藏對應的 TOC 章節和表單欄位。
 
 ## 詳細變更內容
 

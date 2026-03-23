@@ -1,4 +1,62 @@
-﻿# 2026-03-09 圖服部台版書合約搜尋顯示欄位優化
+# 2026-03-23 學術發展部個人授權：支援多位作者資料輸入
+
+## 摘要
+依據需求，將學術發展部「個人授權」合約中的「其他資訊」章節進行優化，新增支援輸入多位作者資料的功能（包含姓名、Email、電話、地址），並同步更新搜尋與模擬資料結構。
+
+## 詳細變更內容
+
+### 1. 資料結構與型別更新
+- [修改] `src/features/academic/types/index.ts`
+  - 新增 `AuthorInfo` 介面，定義作者的詳細欄位（id, name, email, phone, address）。
+  - 重構 `PersonalAuthContract` 介面，將原有的單一作者欄位替換為 `authors: AuthorInfo[]` 陣列。
+  - 保留 `authorName` 欄位作為多位作者姓名的彙總字串（例：「作者A, 作者B」），以維持現有搜尋功能的相容性。
+
+### 2. 組件開發與整合
+- [新增] `src/features/academic/components/AuthorListSection.tsx`
+  - 實作多作者管理介面，支援新增、移除作者。
+  - 每個作者資料卡片可獨立展開/摺疊，並提供「全部展開/摺疊」快捷功能。
+  - 第一位作者自動標記為「主作者」。
+  - 包含姓名（必填）、Email、電話、地址的輸入欄位。
+- [修改] `src/features/academic/constants/fieldConfig.ts`
+  - 更新 `pa-other-info` 欄位配置，將作者資訊改為 `type: 'custom'`，並移除重複的個別作者欄位。
+- [修改] `src/pages/AcademicContract.tsx` & `src/pages/AcademicMaintainContract.tsx`
+  - 引入 `AuthorListSection` 組件。
+  - 在 `getInitialFormData` 中預設初始化一位作者。
+  - 實作 `handleAddAuthor`、`handleRemoveAuthor`、`handleAuthorFieldChange` 管理邏輯。
+  - 當作者姓名變更時，自動更新 `authorName` 彙總字串。
+  - 在表單渲染迴圈中針對 `pa-other-info` 進行特殊渲染處理。
+
+### 3. 模擬資料適配
+- [修改] `src/data/mockContracts.ts`
+  - 更新所有個人授權（`personal_auth`）合約的模擬資料（ID 11-15）。
+  - 將原本散落在 `personalAuthInfo` 下的作者資訊遷移至 `authors` 陣列中。
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤。
+- ✅ 搜尋相容性: 由於保留了 `authorName` 彙總欄位，現有的關鍵字搜尋功能運作正常。
+- ✅ 編輯與新增: 經由程式碼審查，作者增刪與欄位同步邏輯正確。
+
+---
+
+# 2026-03-09 學發部合約新增與維護：個人授權欄位優化
+
+## 摘要
+依據需求，將學術發展部的「個人授權」合約標的名稱變更為 `[個人授權]合約標的`，並將「類型」欄位改為下拉式選單。同時，當選擇為個人授權時，頁面的第一個區塊會直接切換為該合約標的表單，並且修復了新增與維護頁面中權利金比例區塊無法正確顯示的問題。
+
+## 詳細變更內容
+- [修改] `src/features/academic/constants/tocSections.ts`
+  - 將 `pa-registration-info` 的標題名稱由 `[個人授權]造冊資訊` 修改為 `[個人授權]合約標的`。
+- [修改] `src/features/academic/constants/fieldConfig.ts`
+  - 將 `pa-registration-info` 中的 `type` 欄位型態由唯讀文字輸入 (`text`) 轉換為下拉式選單 (`select`)，並附加固定選項 `['期刊', '論文集', '個人授權']`，使用戶可以在新增合約區塊隨時切換目標類型。
+- [修改] `src/pages/AcademicContract.tsx` & `src/pages/AcademicMaintainContract.tsx`
+  - 隱藏原始共用的 `contract-target` 區塊，當所選合約類型為「個人授權」且觸發過濾邏輯時，強制頁面第一個區塊即顯示為個人授權的合約標的 (原造冊資訊)。
+  - 設定 `onChange` 攔截機制，當在 `pa-registration-info` 區塊內變更 `type` (類型) 欄位時，自動同步更新至 `formData.contractTarget.type`，以確保頁面 UI 可以即時依照正確的合約類型動態切換視圖。
+  - 將權利金比例 (`pa-royalty-info`) 顯示條件，由狹義的 `formData.contractType === 'personal_auth'` 改為更廣義的 `isPersonalAuth` 判定，完美解決新增與維護狀態下個人授權權利金區塊無法正常顯示的功能性 Bug。
+  - 透過 `any` 型別轉型排除潛在的 TypeScript 警告 (`Property 'personalAuthRoyaltyInfo' does not exist`)，確保編譯順利。
+
+---
+
+# 2026-03-09 圖服部台版書合約搜尋顯示欄位優化
 
 ## 摘要
 依據需求，將圖服部搜尋合約模組中當合約標的類型為「台版書」時，搜尋結果顯示的預設欄位、篩選顯示欄位以及進階篩選區塊進行客製化與優化，能正確呈現台版書專屬資訊。
@@ -106,10 +164,6 @@
 - 將原有合約分離為 `JournalProceedingsContract` (包含完整的權利、範圍、匯款、條款等欄位) 與 `PersonalAuthContract` (包含個人授權專屬欄位及權利金比例)
 - 定義 `ContractData = JournalProceedingsContract | PersonalAuthContract`，並使用 `contractType` 作為鑑別欄位
 
-### [修改] `src/data/mockContracts.ts`
-- 更新所有 mock data 補上 `contractType`
-- 針對 `contractType === 'personal_auth'` 的資料，移除多餘的 `registrationInfo`、`basicInfo`、`rightsInfo` 等不需要的欄位物件，使資料變得更乾淨輕量
-
 ### [修改] `src/pages/AcademicContract.tsx` & `src/pages/AcademicMaintainContract.tsx`
 - 在各個需要判斷型別的地方加上 `contractType === 'journal_proceedings'` 型別守衛 (Type Guards) 或進行安全的型別轉換
 - 更新 `getInitialFormData` 預設產生符合 `JournalProceedingsContract` 結構的資料
@@ -171,7 +225,7 @@
 # 2026-03-02 學發部新增「個人授權」合約類型
 
 ## 摘要
-在學術發展部的合約系統中新增「個人授權」合約標的類型。個人授權代表作者與平台單獨簽訂一篇文章的授權，權利金欄位結構與期刊/論文集完全不同，特別是沒有卷期規則的概念。採用 DDD（圖書服務部）的條件渲染模式，依據使用者選擇的「類型」動態顯示/隱藏對應的 TOC 章節和表單欄位。
+在學術發展部的合約系統中新增「個人授權」合約標的類型。個人授權代表作者與平台單獨簽訂一篇文章的授權，權利金欄位結構與期刊/論文集完全不同，特別是沒有卷期規則的概念。採用 DDD（圖書服務部）的條件渲染模式，依據使用者選擇的「類型」動態顯示/隱藏對應的 TOC 章節 and 表單欄位。
 
 ## 詳細變更內容
 
@@ -529,7 +583,7 @@ Exit code: 0
 
 ## 技術決策
 1. **使用 PowerShell Move-Item 而非 git mv:** 因遇到 Git 鎖定檔案問題,改用 PowerShell 命令執行檔案/資料夾重新命名
-2. **段階式更新 import:** 先更新資料夾路徑,再更新檔案名稱,最後更新 import 語句,降低錯誤風險
+2. **階段式更新 import:** 先更新資料夾路徑,再更新檔案名稱,最後更新 import 語句,降低錯誤風險
 3. **保留部分 TuFu 命名:** `TuFuContractData` 等型別名稱保持不變,因為這些是圖書服務部專屬的資料結構定義,與業務邏輯緊密相關
 
 ## 後續建議
@@ -722,7 +776,7 @@ Exit code: 0
 
 ### 修正與優化
 1.  **[修改] 學發部合約 - 合約標的類型欄位**
-    - 將 `fieldConfig.ts` 中的 `type` 欄位型別從文字輸入 (`text`) 改為下拉式選單 (`select`)。
+    - 將 `fieldConfig.ts` 中的 `type` 欄位型態從文字輸入 (`text`) 改為下拉式選單 (`select`)。
     - 設定固定選項：`['期刊', '論文集', '個人授權']`。
 2.  **[修正] GitHub Actions Workflow YAML 語法錯誤**
     - 修正 `deploy.yml` 中 `Build` 步驟的縮排錯誤，解決 "Implicit map keys need to be followed by map values" 錯誤。

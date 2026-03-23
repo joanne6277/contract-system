@@ -6,3 +6,4 @@ export { DamagesField } from './DamagesField';
 export { default as RoyaltyModal } from './RoyaltyModal';
 export { default as RemittanceSection } from './RemittanceSection';
 export { default as PersonalAuthRoyaltyModal } from './PersonalAuthRoyaltyModal';
+export { default as AuthorListSection } from './AuthorListSection';

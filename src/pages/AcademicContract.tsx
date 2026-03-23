@@ -16,11 +16,19 @@ import { useContractForm } from '@/shared/hooks';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
 import { ValidationWarningPanel } from '@/components/common';
 // 引入學發部專用元件
-import { RoyaltyModal, RemittanceSection, PersonalAuthRoyaltyModal } from '@/features/academic/components';
+import { RoyaltyModal, RemittanceSection, PersonalAuthRoyaltyModal, AuthorListSection } from '@/features/academic/components';
 
 
 // --- 1. 輔助函式與初始資料 (Helper Functions & Initial Data) ---
 const getInitialVolumeIdentifier = (): VolumeIdentifier => ({ format: 'volume_issue', volume: '', issue: '', year: '', month: '', description: '' });
+
+const getInitialAuthor = (): any => ({
+    id: `author-${Date.now()}-${Math.random()}`,
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+});
 
 const getInitialDateScheme = (startDate: string = '', endDate: string = ''): DateScheme => ({
     id: `ds-${Date.now()}-${Math.random()}`,
@@ -63,9 +71,26 @@ const getInitialFormData = (): ContractData => {
         terminationInfo: { isTerminated: '否', terminationReason: '', terminationDate: '', terminationMethod: '' },
         royaltyInfo: [getInitialDateScheme()],
         remittanceInfo: [],
+        personalAuthInfo: {
+            publicationId: '',
+            type: '個人授權',
+            contractNo: '',
+            journalName: '',
+            volumeIssue: '',
+            articleTitle: '',
+            authorizationDate: '',
+            authorizationStatus: '非專個人領取',
+            authorizationRegion: '全球用戶',
+            royaltyUid: '',
+            authorName: '',
+            authors: [getInitialAuthor()],
+            paRemarks: '',
+            docid: ''
+        },
+        personalAuthRoyaltyInfo: [],
         remarks: '',
         scanFile: null
-    };
+    } as any;
 };
 
 // Define an interface for FormField props
@@ -190,7 +215,7 @@ const AcademicContract: React.FC = () => {
     // 依合約類型過濾 TOC 章節（參照 DDDContract.tsx 的條件渲染模式）
     const contractType = formData.contractType === 'personal_auth' ? '個人授權' : formData.contractTarget.type;
     const isPersonalAuth = contractType === '個人授權';
-    const journalSections = ['registration-info', 'termination-info', 'basic-info', 'rights-info', 'royalty-info', 'scope-info', 'other-clauses', 'remittance-info'];
+    const journalSections = ['contract-target', 'registration-info', 'termination-info', 'basic-info', 'rights-info', 'royalty-info', 'scope-info', 'other-clauses', 'remittance-info'];
     const paSections = ['pa-registration-info', 'pa-rights-info', 'pa-royalty-info', 'pa-other-info'];
     const visibleTocSections = tocSections.filter(section => {
         if (isPersonalAuth && journalSections.includes(section.id)) return false;
@@ -332,6 +357,69 @@ const AcademicContract: React.FC = () => {
         setFormData(prev => ({ ...prev, personalAuthRoyaltyInfo: data }));
     };
 
+    // 作者管理
+    const handleAddAuthor = () => {
+        setFormData(prev => {
+            const pa = prev as any;
+            if (!pa.personalAuthInfo) return prev;
+            const newAuthors = [...(pa.personalAuthInfo.authors || []), getInitialAuthor()];
+            return {
+                ...prev,
+                personalAuthInfo: {
+                    ...pa.personalAuthInfo,
+                    authors: newAuthors
+                }
+            };
+        });
+    };
+
+    const handleRemoveAuthor = (id: string) => {
+        setFormData(prev => {
+            const pa = prev as any;
+            if (!pa.personalAuthInfo) return prev;
+            const newAuthors = pa.personalAuthInfo.authors.filter((a: any) => a.id !== id);
+            // 確保至少有一個作者
+            if (newAuthors.length === 0) newAuthors.push(getInitialAuthor());
+
+            // 更新彙總姓名
+            const authorName = newAuthors.map((a: any) => a.name).filter(Boolean).join(', ');
+
+            return {
+                ...prev,
+                personalAuthInfo: {
+                    ...pa.personalAuthInfo,
+                    authors: newAuthors,
+                    authorName
+                }
+            };
+        });
+    };
+
+    const handleAuthorFieldChange = (authorId: string, field: string, value: string) => {
+        setFormData(prev => {
+            const pa = prev as any;
+            if (!pa.personalAuthInfo) return prev;
+            const newAuthors = pa.personalAuthInfo.authors.map((a: any) =>
+                a.id === authorId ? { ...a, [field]: value } : a
+            );
+
+            // 更新彙總姓名 (供搜尋與快速顯示)
+            let authorName = pa.personalAuthInfo.authorName;
+            if (field === 'name') {
+                authorName = newAuthors.map((a: any) => a.name).filter(Boolean).join(', ');
+            }
+
+            return {
+                ...prev,
+                personalAuthInfo: {
+                    ...pa.personalAuthInfo,
+                    authors: newAuthors,
+                    authorName
+                }
+            };
+        });
+    };
+
     // --- JSX Render ---
     return (
         <div className="relative">
@@ -418,18 +506,57 @@ const AcademicContract: React.FC = () => {
                             );
                         }
 
-                        // 個人授權權利金比例區塊
-                        if (section.id === 'pa-royalty-info' && formData.contractType === 'personal_auth') {
+                        if (section.id === 'pa-royalty-info' && isPersonalAuth) {
                             return (
                                 <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
                                     <Button type="button" onClick={openPaRoyaltyModal} variant="ghost" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">編輯權利金規則（個人授權）</Button>
-                                    {formData.personalAuthRoyaltyInfo && formData.personalAuthRoyaltyInfo.length > 0 && formData.personalAuthRoyaltyInfo.some(s => s.startDate || s.endDate) && (
+                                    {(formData as any).personalAuthRoyaltyInfo && (formData as any).personalAuthRoyaltyInfo.length > 0 && (formData as any).personalAuthRoyaltyInfo.some((s: any) => s.startDate || s.endDate) && (
                                         <div className="mt-3 text-sm text-gray-500">
-                                            已設定 {formData.personalAuthRoyaltyInfo.length} 個日期方案，
-                                            共 {formData.personalAuthRoyaltyInfo.reduce((sum, s) => sum + s.royaltySplits.length, 0)} 筆分潤明細
+                                            已設定 {(formData as any).personalAuthRoyaltyInfo.length} 個日期方案，
+                                            共 {(formData as any).personalAuthRoyaltyInfo.reduce((sum: any, s: any) => sum + s.royaltySplits.length, 0)} 筆分潤明細
                                         </div>
                                     )}
+                                </div>
+                            );
+                        }
+
+                        if (section.id === 'pa-other-info' && isPersonalAuth) {
+                            const paBeneficiaries = Array.from(new Set(
+                                ((formData as any).personalAuthRoyaltyInfo || [])
+                                    .flatMap((scheme: any) => scheme.royaltySplits.map((split: any) => split.beneficiary))
+                                    .filter(Boolean)
+                            )) as string[];
+
+                            return (
+                                <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
+                                    <div className="space-y-6">
+                                        <AuthorListSection
+                                            authors={(formData as any).personalAuthInfo?.authors || []}
+                                            beneficiaries={paBeneficiaries}
+                                            onAdd={handleAddAuthor}
+                                            onRemove={handleRemoveAuthor}
+                                            onFieldChange={handleAuthorFieldChange}
+                                        />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t border-gray-100">
+                                            {fieldConfig['pa-other-info'].filter(f => f.id !== 'authors').map(field => {
+                                                const path = `personalAuthInfo.${field.id}`;
+                                                const value = getFieldValue(formData, path);
+                                                return (
+                                                    <div key={field.id as string} className={field.fullWidth ? 'lg:col-span-3' : ''}>
+                                                        <FormField
+                                                            field={field}
+                                                            path={path}
+                                                            value={value}
+                                                            onChange={handleDynamicFormChange}
+                                                            isRequired={isFieldRequired(path)}
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 </div>
                             );
                         }
@@ -458,7 +585,12 @@ const AcademicContract: React.FC = () => {
                                                     field={field}
                                                     path={path}
                                                     value={value}
-                                                    onChange={handleDynamicFormChange}
+                                                    onChange={(p, v) => {
+                                                        handleDynamicFormChange(p, v);
+                                                        if (section.id === 'pa-registration-info' && field.id === 'type') {
+                                                            handleDynamicFormChange('contractTarget.type', v);
+                                                        }
+                                                    }}
                                                     isRequired={isFieldRequired(path)}
                                                 />
                                             </div>
@@ -489,7 +621,7 @@ const AcademicContract: React.FC = () => {
             <PersonalAuthRoyaltyModal
                 isOpen={isPaRoyaltyModalOpen}
                 onClose={closePaRoyaltyModal}
-                royaltyInfo={formData.contractType === 'personal_auth' ? (formData.personalAuthRoyaltyInfo || []) : []}
+                royaltyInfo={isPersonalAuth ? ((formData as any).personalAuthRoyaltyInfo || []) : []}
                 onSave={savePaRoyaltyChanges}
             />
 

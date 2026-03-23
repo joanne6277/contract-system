@@ -97,7 +97,7 @@ export const fieldConfig: { [sectionId: string]: FormFieldConfig[] } = {
     // --- 個人授權專用欄位 ---
     'pa-registration-info': [
         { id: 'publicationId', label: 'PublicationID', type: 'text' },
-        { id: 'type', label: '類型', type: 'text', isReadOnly: true },
+        { id: 'type', label: '類型', type: 'select', options: ['期刊', '論文集', '個人授權'] },
         { id: 'contractNo', label: '合約編號', type: 'text' },
         { id: 'journalName', label: '期刊名稱', type: 'text' },
         { id: 'volumeIssue', label: '卷期', type: 'text' },
@@ -106,15 +106,12 @@ export const fieldConfig: { [sectionId: string]: FormFieldConfig[] } = {
     'pa-rights-info': [
         { id: 'authorizationDate', label: '授權書日期', type: 'date' },
         { id: 'authorizationStatus', label: '授權狀態_提領方式', type: 'select', options: ['非專個人領取', '非專無償', '個人領取', '捐贈慈善基金會'] },
-        { id: 'authorizationRegion', label: '授權地區', type: 'select', options: ['不上CN', '全球用戶'] },
+        { id: 'authorizationRegion', label: '授權地區', type: 'select', options: ['不上CN', '不上CN_含港澳', '全球用戶'] },
         { id: 'royaltyUid', label: '權利金掛UID', type: 'text' },
     ],
     'pa-other-info': [
-        { id: 'authorName', label: '作者姓名', type: 'text' },
+        { id: 'authors', label: '作者資料', type: 'custom', fullWidth: true },
         { id: 'paRemarks', label: '備註', type: 'textarea', fullWidth: true },
-        { id: 'email', label: 'Email', type: 'text' },
-        { id: 'phone', label: '電話', type: 'text' },
-        { id: 'address', label: '地址', type: 'text', fullWidth: true },
         { id: 'docid', label: 'docid', type: 'text' },
     ],
 };

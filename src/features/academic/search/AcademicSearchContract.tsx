@@ -192,29 +192,29 @@ const personalAuthColumnConfig = {
     defaultVisible: [
         'personalAuthInfo.publicationId',
         'personalAuthInfo.contractNo',
-        'personalAuthInfo.authorName',
         'personalAuthInfo.articleTitle',
         'personalAuthInfo.journalName',
-        'personalAuthInfo.volumeIssue',
-        'personalAuthRoyaltyInfo',
-        'personalAuthInfo.authorizationDate',
-        'personalAuthInfo.authorizationStatus',
-        'personalAuthInfo.authorizationRegion',
+        'personalAuthInfo.authorName',
     ],
     selectable: [
         {
-            group: '個人授權資訊',
+            group: '文章資訊',
             columns: [
                 { id: 'personalAuthInfo.publicationId', label: 'PublicationID' },
                 { id: 'personalAuthInfo.contractNo', label: '合約編號' },
-                { id: 'personalAuthInfo.authorName', label: '作者' },
                 { id: 'personalAuthInfo.articleTitle', label: '論文名稱' },
                 { id: 'personalAuthInfo.journalName', label: '期刊名稱' },
                 { id: 'personalAuthInfo.volumeIssue', label: '卷期' },
-                { id: 'personalAuthRoyaltyInfo', label: '權利金比例' },
-                { id: 'personalAuthInfo.authorizationDate', label: '授權日期' },
+                { id: 'personalAuthInfo.authorName', label: '作者姓名' },
+            ]
+        },
+        {
+            group: '權利內容',
+            columns: [
+                { id: 'personalAuthInfo.authorizationDate', label: '授權書日期' },
                 { id: 'personalAuthInfo.authorizationStatus', label: '授權狀態' },
                 { id: 'personalAuthInfo.authorizationRegion', label: '授權地區' },
+                { id: 'personalAuthRoyaltyInfo', label: '權利金比例' },
             ]
         }
     ]
@@ -443,7 +443,7 @@ const getInitialFormData = (): ContractData => {
 };
 
 // --- Column Selector Component ---
-const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns }) => {
+const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns, activeColumnConfig }) => {
     const [tempVisibleColumns, setTempVisibleColumns] = useState(new Set(visibleColumns));
     const checkboxRef = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
@@ -472,7 +472,7 @@ const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns }) 
             const newSet = new Set(prev);
             if (allSelected) {
                 columnIds.forEach(id => {
-                    if (id !== 'contractTarget.title') {
+                    if (id !== 'contractTarget.title' && id !== 'personalAuthInfo.articleTitle') {
                         newSet.delete(id);
                     }
                 });
@@ -489,11 +489,11 @@ const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns }) 
     };
 
     const handleReset = () => {
-        setTempVisibleColumns(new Set(columnConfig.defaultVisible));
+        setTempVisibleColumns(new Set(activeColumnConfig.defaultVisible));
     };
 
     useEffect(() => {
-        columnConfig.selectable.forEach(group => {
+        activeColumnConfig.selectable.forEach(group => {
             const groupColumnIds = group.columns.map(c => c.id);
             const areAllSelected = groupColumnIds.every(id => tempVisibleColumns.has(id));
             const areSomeSelected = groupColumnIds.some(id => tempVisibleColumns.has(id));
@@ -503,7 +503,7 @@ const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns }) 
                 checkbox.indeterminate = !areAllSelected && areSomeSelected;
             }
         });
-    }, [tempVisibleColumns]);
+    }, [tempVisibleColumns, activeColumnConfig]);
 
 
     return (
@@ -523,7 +523,7 @@ const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns }) 
             }
         >
             <div className="max-h-[60vh] overflow-y-auto space-y-6">
-                {columnConfig.selectable.map(group => (
+                {activeColumnConfig.selectable.map(group => (
                     <div key={group.group}>
                         <div className="flex items-center mb-3">
                             <input
@@ -537,7 +537,7 @@ const ColumnSelector = ({ isOpen, onClose, visibleColumns, setVisibleColumns }) 
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 pl-6">
                             {group.columns.map(col => {
-                                const isDisabled = col.id === 'contractTarget.title';
+                                const isDisabled = col.id === 'contractTarget.title' || col.id === 'personalAuthInfo.articleTitle';
                                 return (
                                     <label key={col.id} className={`flex items-center p-2 rounded-md ${isDisabled ? 'cursor-not-allowed opacity-70' : 'hover:bg-gray-50 cursor-pointer'}`}>
                                         <input
@@ -992,9 +992,7 @@ const AcademicDeptContractModule: React.FC = () => {
                                     {lastSearchType !== '個人授權' && (
                                         <Button variant="ghost" onClick={() => setIsFilterDrawerOpen(true)} className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100"><Filter size={16} className="mr-2" />進階篩選</Button>
                                     )}
-                                    {lastSearchType !== '個人授權' && (
-                                        <Button variant="ghost" onClick={() => setShowColumnSelector(true)} className="border border-gray-300 text-gray-700 hover:bg-gray-50"><Columns size={16} className="mr-2" />篩選顯示欄位</Button>
-                                    )}
+                                    <Button variant="ghost" onClick={() => setShowColumnSelector(true)} className="border border-gray-300 text-gray-700 hover:bg-gray-50"><Columns size={16} className="mr-2" />篩選顯示欄位</Button>
                                     <Button variant="ghost" onClick={() => navigateTo('search-contract')} className="border border-gray-300 text-gray-700 hover:bg-gray-50">返回搜尋</Button>
                                 </div>
                             </div>
@@ -1217,7 +1215,13 @@ const AcademicDeptContractModule: React.FC = () => {
             </main>
 
             <FilterDrawer isOpen={isFilterDrawerOpen} onClose={() => setIsFilterDrawerOpen(false)} activeFilters={activeFilters} onFilterChange={setActiveFilters} />
-            <ColumnSelector isOpen={showColumnSelector} onClose={() => setShowColumnSelector(false)} visibleColumns={visibleColumns} setVisibleColumns={setVisibleColumns} />
+            <ColumnSelector
+                isOpen={showColumnSelector}
+                onClose={() => setShowColumnSelector(false)}
+                visibleColumns={visibleColumns}
+                setVisibleColumns={setVisibleColumns}
+                activeColumnConfig={activeColumnConfig}
+            />
 
             {message.show && (<div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg text-white shadow-lg z-[100] ${message.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>{message.message}</div>)}
         </div>

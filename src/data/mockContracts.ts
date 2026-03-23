@@ -797,10 +797,10 @@ export const sampleContracts: ContractData[] = [
             authorizationRegion: '全球用戶',
             royaltyUid: 'U-12345',
             authorName: '張大明',
+            authors: [
+                { id: 'a1', name: '張大明', email: 'daming@example.com', phone: '0912345678', address: '台北市大安區' }
+            ],
             paRemarks: '無',
-            email: 'daming@example.com',
-            phone: '0912345678',
-            address: '台北市大安區',
             docid: 'doc-pa-001'
         },
         personalAuthRoyaltyInfo: [
@@ -824,10 +824,10 @@ export const sampleContracts: ContractData[] = [
             authorizationRegion: '不上CN',
             royaltyUid: 'U-23456',
             authorName: '李小華',
+            authors: [
+                { id: 'a2', name: '李小華', email: 'xiaohua.li@example.com', phone: '0923456789', address: '新竹市光復路' }
+            ],
             paRemarks: '無償提供',
-            email: 'xiaohua.li@example.com',
-            phone: '0923456789',
-            address: '新竹市光復路',
             docid: 'doc-pa-002'
         },
         personalAuthRoyaltyInfo: [],
@@ -849,10 +849,10 @@ export const sampleContracts: ContractData[] = [
             authorizationRegion: '全球用戶',
             royaltyUid: 'U-34567',
             authorName: '陳冠宇',
+            authors: [
+                { id: 'a3', name: '陳冠宇', email: 'kuanyu@example.com', phone: '0934567890', address: '台中市西屯區' }
+            ],
             paRemarks: '收益捐出',
-            email: 'kuanyu@example.com',
-            phone: '0934567890',
-            address: '台中市西屯區',
             docid: 'doc-pa-003'
         },
         personalAuthRoyaltyInfo: [
@@ -876,10 +876,10 @@ export const sampleContracts: ContractData[] = [
             authorizationRegion: '不上CN含港澳',
             royaltyUid: 'U-45678',
             authorName: '林雅婷',
+            authors: [
+                { id: 'a4', name: '林雅婷', email: 'yating.lin@example.com', phone: '0945678901', address: '台南市東區' }
+            ],
             paRemarks: '限區域',
-            email: 'yating.lin@example.com',
-            phone: '0945678901',
-            address: '台南市東區',
             docid: 'doc-pa-004'
         },
         personalAuthRoyaltyInfo: [
@@ -903,10 +903,10 @@ export const sampleContracts: ContractData[] = [
             authorizationRegion: '全球用戶',
             royaltyUid: 'U-56789',
             authorName: '吳宗憲',
+            authors: [
+                { id: 'a5', name: '吳宗憲', email: 'wutz@example.com', phone: '0956789012', address: '桃園市中壢區' }
+            ],
             paRemarks: '重要研究',
-            email: 'wutz@example.com',
-            phone: '0956789012',
-            address: '桃園市中壢區',
             docid: 'doc-pa-005'
         },
         personalAuthRoyaltyInfo: [

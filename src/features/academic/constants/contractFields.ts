@@ -144,7 +144,7 @@ export const fieldConfig: { [sectionId: string]: FormFieldConfig[] } = {
     'pa-rights-info': [
         { id: 'authorizationDate', label: '授權書日期', type: 'date' },
         { id: 'authorizationStatus', label: '授權狀態_提領方式', type: 'select', options: ['非專個人領取', '非專無償', '個人領取', '捐贈慈善基金會'] },
-        { id: 'authorizationRegion', label: '授權地區', type: 'select', options: ['不上CN', '全球用戶'] },
+        { id: 'authorizationRegion', label: '授權地區', type: 'select', options: ['不上CN', '不上CN_含港澳', '全球用戶'] },
         { id: 'royaltyUid', label: '權利金掛UID', type: 'text' },
     ],
     'pa-other-info': [

@@ -11,7 +11,7 @@ export const tocSections = [
     { id: 'other-clauses', label: '其他條款' },
     { id: 'remittance-info', label: '匯款資料' },
     // 個人授權專用章節
-    { id: 'pa-registration-info', label: '[個人授權]造冊資訊' },
+    { id: 'pa-registration-info', label: '[個人授權]合約標的' },
     { id: 'pa-rights-info', label: '[個人授權]權利內容' },
     { id: 'pa-royalty-info', label: '[個人授權]權利金比例' },
     { id: 'pa-other-info', label: '[個人授權]其他資訊' },

@@ -146,6 +146,14 @@ export interface JournalProceedingsContract extends BaseAcademicContract {
     royaltyInfo: DateScheme[];
 }
 
+export interface AuthorInfo {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+}
+
 export interface PersonalAuthContract extends BaseAcademicContract {
     contractType: 'personal_auth';
     personalAuthInfo: {
@@ -159,11 +167,9 @@ export interface PersonalAuthContract extends BaseAcademicContract {
         authorizationStatus: string;
         authorizationRegion: string;
         royaltyUid: string;
-        authorName: string;
+        authorName: string; // 用於快速顯示/搜尋的彙總欄位 (例: "作者1, 作者2")
+        authors: AuthorInfo[];
         paRemarks: string;
-        email: string;
-        phone: string;
-        address: string;
         docid: string;
     };
     personalAuthRoyaltyInfo: PersonalAuthRoyaltyScheme[];

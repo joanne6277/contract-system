@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { fieldKeyToNameMap, validationRules } from '../constants';
 
 import type {
-    TuFuContractData, OtherClauses, CheckboxWithTextData
+    TuFuContractData, OtherClauses, CheckboxWithTextData, EbookMagazineContract, TaiwanBookContract
 } from '../types';
 
 const MOCK_CONTRACTS: TuFuContractData[] = [{
@@ -22,11 +22,12 @@ const MOCK_CONTRACTS: TuFuContractData[] = [{
     scanFile: 'old-contract.pdf',
     createdAt: new Date('2020-01-01T00:00:00.000Z'),
     maintenanceHistory: [],
-}];
+} as unknown as TuFuContractData];
 
 const getInitialFormData = (): TuFuContractData => {
     const initialCheckboxWithText = { selected: '', details: '' };
     return {
+        contractType: 'ebook_magazine',
         registrationInfo: { airitiContractNo: '', ebookContractNo: '', acquisitionMaintainer: '', asTeamMaintainer: '' },
         basicInfo: { publisherName: '', licensorPersonInCharge: '', licensorRep: '', airitiSignatory: '', contractTargetType: '', contractStatus: '', earlyTermination: '', contractStartDate: '', contractEndDate: '', autoRenewYears: '', autoRenewTimes: '', thereafter: '', contractVersionNo: '', contractName: '', specialPenalties: '', jurisdiction: '' },
         rightsInfo: {
@@ -41,7 +42,7 @@ const getInitialFormData = (): TuFuContractData => {
         twBookContact: { publisherRegion: '', contacts: [{ id: crypto.randomUUID(), info: '', title: [], email: '', phone: '' }], companyPostalCode: '', companyAddress: '', logisticsPostalCode: '', logisticsAddress: '' },
         remarks: '',
         scanFile: null
-    };
+    } as unknown as TuFuContractData;
 };
 
 export const useDDDContractForm = () => {
@@ -96,7 +97,7 @@ export const useDDDContractForm = () => {
 
     const handleBulkPlatformUpdate = (value: 'yes' | 'no' | 'other' | '') => {
         setFormData(prev => {
-            const newFormData = JSON.parse(JSON.stringify(prev));
+            const newFormData = JSON.parse(JSON.stringify(prev)) as EbookMagazineContract;
             platformGridItems.forEach(key => {
                 const itemKey = key as keyof typeof newFormData.otherClauses;
                 if (newFormData.otherClauses[itemKey]) {
@@ -106,7 +107,7 @@ export const useDDDContractForm = () => {
                     }
                 }
             });
-            return newFormData;
+            return newFormData as unknown as TuFuContractData;
         });
     };
 
@@ -120,7 +121,7 @@ export const useDDDContractForm = () => {
 
     const handleRightsBulkUpdate = (value: 'yes' | 'no' | 'other' | '') => {
         setFormData(prev => {
-            const newFormData = JSON.parse(JSON.stringify(prev));
+            const newFormData = JSON.parse(JSON.stringify(prev)) as EbookMagazineContract;
             rightsTableItems.forEach(key => {
                 const itemKey = key as keyof typeof newFormData.rightsInfo;
                 if (newFormData.rightsInfo[itemKey]) {
@@ -130,7 +131,7 @@ export const useDDDContractForm = () => {
                     }
                 }
             });
-            return newFormData;
+            return newFormData as unknown as TuFuContractData;
         });
     };
 
@@ -143,7 +144,13 @@ export const useDDDContractForm = () => {
     };
 
     useEffect(() => {
-        const platformSelections = platformGridItems.map(item => (formData.otherClauses[item as keyof OtherClauses] as CheckboxWithTextData)?.selected);
+        if (formData.contractType === 'taiwan_book') {
+            setPlatformBulkSelectState('');
+            setRightsBulkSelect('');
+            return;
+        }
+        const ebookData = formData as EbookMagazineContract;
+        const platformSelections = platformGridItems.map(item => (ebookData.otherClauses[item as keyof OtherClauses] as CheckboxWithTextData)?.selected);
         if (platformSelections.length > 0) {
             const firstValue = platformSelections[0];
             const allSame = firstValue && platformSelections.every(sel => sel === firstValue);
@@ -152,7 +159,7 @@ export const useDDDContractForm = () => {
             setPlatformBulkSelectState('');
         }
 
-        const rightsSelections = rightsTableItems.map(item => (formData.rightsInfo[item as keyof typeof formData.rightsInfo] as CheckboxWithTextData)?.selected);
+        const rightsSelections = rightsTableItems.map(item => (ebookData.rightsInfo[item as keyof typeof ebookData.rightsInfo] as CheckboxWithTextData)?.selected);
         if (rightsSelections.length > 0 && rightsSelections[0]) {
             const firstValue = rightsSelections[0];
             const allSame = rightsSelections.every(sel => sel === firstValue);
@@ -160,7 +167,7 @@ export const useDDDContractForm = () => {
         } else {
             setRightsBulkSelect('');
         }
-    }, [formData.otherClauses, formData.rightsInfo]);
+    }, [formData]);
 
     const validateForm = () => {
         const missingLevel1: string[] = [];
@@ -220,19 +227,22 @@ export const useDDDContractForm = () => {
     };
 
     const handleContactChange = (index: number, field: string, value: any) => {
-        const updatedContacts = [...formData.twBookContact.contacts];
+        const twBookData = formData as unknown as TaiwanBookContract;
+        const updatedContacts = [...(twBookData.twBookContact?.contacts || [])];
         // @ts-ignore
         updatedContacts[index][field] = value;
         handleDynamicFormChange('twBookContact.contacts', updatedContacts);
     };
 
     const addContact = () => {
+        const twBookData = formData as unknown as TaiwanBookContract;
         const newContact = { id: crypto.randomUUID(), info: '', title: [], email: '', phone: '' };
-        handleDynamicFormChange('twBookContact.contacts', [...formData.twBookContact.contacts, newContact]);
+        handleDynamicFormChange('twBookContact.contacts', [...(twBookData.twBookContact?.contacts || []), newContact]);
     };
 
     const removeContact = (id: string) => {
-        const updatedContacts = formData.twBookContact.contacts.filter(contact => contact.id !== id);
+        const twBookData = formData as unknown as TaiwanBookContract;
+        const updatedContacts = (twBookData.twBookContact?.contacts || []).filter(contact => contact.id !== id);
         handleDynamicFormChange('twBookContact.contacts', updatedContacts);
     };
 

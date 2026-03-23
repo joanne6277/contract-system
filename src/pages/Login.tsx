@@ -60,7 +60,7 @@ const Login: React.FC = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className="w-full px-4 py-2 border rounded-lg"
-                            placeholder="預設密碼可能為 0000 或 password123"
+                            placeholder="測試密碼: 0000"
                         />
                     </div>
                     {error && <p className="text-red-500 text-sm text-center">{error}</p>}

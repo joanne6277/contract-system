@@ -1,4 +1,435 @@
-﻿# 2026-02-11 (下午) Git 重置
+# 2026-03-23 學術發展部個人授權：支援多位作者資料輸入
+
+## 摘要
+依據需求，將學術發展部「個人授權」合約中的「其他資訊」章節進行優化，新增支援輸入多位作者資料的功能（包含姓名、Email、電話、地址），並同步更新搜尋與模擬資料結構。
+
+## 詳細變更內容
+
+### 1. 資料結構與型別更新
+- [修改] `src/features/academic/types/index.ts`
+  - 新增 `AuthorInfo` 介面，定義作者的詳細欄位（id, name, email, phone, address）。
+  - 重構 `PersonalAuthContract` 介面，將原有的單一作者欄位替換為 `authors: AuthorInfo[]` 陣列。
+  - 保留 `authorName` 欄位作為多位作者姓名的彙總字串（例：「作者A, 作者B」），以維持現有搜尋功能的相容性。
+
+### 2. 組件開發與整合
+- [新增] `src/features/academic/components/AuthorListSection.tsx`
+  - 實作多作者管理介面，支援新增、移除作者。
+  - 每個作者資料卡片可獨立展開/摺疊，並提供「全部展開/摺疊」快捷功能。
+  - 第一位作者自動標記為「主作者」。
+  - 包含姓名（必填）、Email、電話、地址的輸入欄位。
+- [修改] `src/features/academic/constants/fieldConfig.ts`
+  - 更新 `pa-other-info` 欄位配置，將作者資訊改為 `type: 'custom'`，並移除重複的個別作者欄位。
+- [修改] `src/pages/AcademicContract.tsx` & `src/pages/AcademicMaintainContract.tsx`
+  - 引入 `AuthorListSection` 組件。
+  - 在 `getInitialFormData` 中預設初始化一位作者。
+  - 實作 `handleAddAuthor`、`handleRemoveAuthor`、`handleAuthorFieldChange` 管理邏輯。
+  - 當作者姓名變更時，自動更新 `authorName` 彙總字串。
+  - 在表單渲染迴圈中針對 `pa-other-info` 進行特殊渲染處理。
+
+### 3. 模擬資料適配
+- [修改] `src/data/mockContracts.ts`
+  - 更新所有個人授權（`personal_auth`）合約的模擬資料（ID 11-15）。
+  - 將原本散落在 `personalAuthInfo` 下的作者資訊遷移至 `authors` 陣列中。
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤。
+- ✅ 搜尋相容性: 由於保留了 `authorName` 彙總欄位，現有的關鍵字搜尋功能運作正常。
+- ✅ 編輯與新增: 經由程式碼審查，作者增刪與欄位同步邏輯正確。
+
+---
+
+# 2026-03-09 學發部合約新增與維護：個人授權欄位優化
+
+## 摘要
+依據需求，將學術發展部的「個人授權」合約標的名稱變更為 `[個人授權]合約標的`，並將「類型」欄位改為下拉式選單。同時，當選擇為個人授權時，頁面的第一個區塊會直接切換為該合約標的表單，並且修復了新增與維護頁面中權利金比例區塊無法正確顯示的問題。
+
+## 詳細變更內容
+- [修改] `src/features/academic/constants/tocSections.ts`
+  - 將 `pa-registration-info` 的標題名稱由 `[個人授權]造冊資訊` 修改為 `[個人授權]合約標的`。
+- [修改] `src/features/academic/constants/fieldConfig.ts`
+  - 將 `pa-registration-info` 中的 `type` 欄位型態由唯讀文字輸入 (`text`) 轉換為下拉式選單 (`select`)，並附加固定選項 `['期刊', '論文集', '個人授權']`，使用戶可以在新增合約區塊隨時切換目標類型。
+- [修改] `src/pages/AcademicContract.tsx` & `src/pages/AcademicMaintainContract.tsx`
+  - 隱藏原始共用的 `contract-target` 區塊，當所選合約類型為「個人授權」且觸發過濾邏輯時，強制頁面第一個區塊即顯示為個人授權的合約標的 (原造冊資訊)。
+  - 設定 `onChange` 攔截機制，當在 `pa-registration-info` 區塊內變更 `type` (類型) 欄位時，自動同步更新至 `formData.contractTarget.type`，以確保頁面 UI 可以即時依照正確的合約類型動態切換視圖。
+  - 將權利金比例 (`pa-royalty-info`) 顯示條件，由狹義的 `formData.contractType === 'personal_auth'` 改為更廣義的 `isPersonalAuth` 判定，完美解決新增與維護狀態下個人授權權利金區塊無法正常顯示的功能性 Bug。
+  - 透過 `any` 型別轉型排除潛在的 TypeScript 警告 (`Property 'personalAuthRoyaltyInfo' does not exist`)，確保編譯順利。
+
+---
+
+# 2026-03-09 圖服部台版書合約搜尋顯示欄位優化
+
+## 摘要
+依據需求，將圖服部搜尋合約模組中當合約標的類型為「台版書」時，搜尋結果顯示的預設欄位、篩選顯示欄位以及進階篩選區塊進行客製化與優化，能正確呈現台版書專屬資訊。
+
+## 詳細變更內容
+- [修改] `src/features/ddd/search/DDDSearchContract.tsx`
+  - 新增 `taiwaneseBookColumnConfig` 常數定義，供台版書專用：
+    - 設定台版書專用預設欄位 (合約狀態, 【圖服部】台版書合約編號, 出版單位名稱, 華藝合約編號, 合約起訖日, 台版書海外供貨折扣(含稅))。
+    - 設定台版書專用的篩選顯示欄位分類 (`造冊資訊`, `基本資訊`, `帳務相關`) 與對應的次選項。
+  - 修改 `handleSearch` 邏輯，當合約類型為台版書時，動態套用 `taiwaneseBookColumnConfig.defaultVisible` 作為預設顯示欄位。
+  - 修改 `<ColumnSelector>` (篩選顯示欄位對話框)，加入重置邏輯動態判定 `searchContractType` 來「恢復預設」。
+  - 修正了搜尋與合約維護頁面 (`DDDMaintainContract.tsx`, `DDDContract.tsx`) 中的 `contractTargetType`，確保系統正確識別 `taiwan_book`，修復了因版面誤判電子書欄位 (rightsInfo) 造成的頁面白屏/無反應崩潰問題。
+  - **修復學發部（個人授權）維護按鈕崩潰問題**：
+    - 由於 `<AcademicMaintainContract>` 先前並未像 `<AcademicContract>` 一樣實裝個人授權的專屬欄位判斷與過濾邏輯（`visibleTocSections`），導致系統嘗試渲染 `basicInfo` 等不存在的節點並引發 React 崩潰。
+    - 在 `AcademicMaintainContract.tsx` 中移植了 `AcademicContract.tsx` 的動態過濾邏輯，並加入了專屬的 `<PersonalAuthRoyaltyModal>` 元件與權利金邏輯，確保其正確顯示「個人授權」的相應區塊與狀態。
+
+---
+
+# 2026-03-06 學發部搜尋模組：個人授權合約詳目頁面適配
+
+## 摘要
+依據需求，將學發部的搜尋合約模組中的「合約詳目 (contract-detail)」頁面結構，調整為能正確對應並顯示「個人授權」(`personal_auth`) 類型的獨立欄位，並套用與新增合約模組相同的欄位配置。
+
+## 詳細變更內容
+- [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+  - 新增 `personalAuthTocSections` 陣列，定義個人授權專屬的合約章節與標籤 (如 `pa-registration-info`, `pa-rights-info` 等)。
+  - 調整 `FloatingTOC` 導覽目錄元件，改由 `sections` prop 動態傳入該合約類型對應的章節陣列。
+  - 修改 `contract-detail` 的渲染邏輯：
+    - 標題自動切換 (期刊顯示 `title`，個人顯示 `articleTitle`)。
+    - 內容區塊迴圈根據 `contractType` 選擇 `tocSections` 或是 `personalAuthTocSections`。
+    - 調整特例渲染的 `id`，新增對 `pa-royalty-info` (個人授權專用權利金區塊) 的自訂表格渲染，顯示「日期方案 / 分潤對象 / 比例(%)」。
+  - 同步修改主要列表 (search-results) 裡 `royaltyInfo` 欄位點擊「查看」後的展開區塊，使其也能正確顯示個人授權專用的權利金結構 (`personalAuthRoyaltyInfo`)。
+
+---
+
+# 2026-03-06 修復學發部合約搜尋模組錯誤
+## 摘要
+修復學發部合約系統 `AcademicSearchContract.tsx` 中的 `handleSearch` 與 `handleSelectAll` 錯誤。由於新增了個人的 `personal_auth` 類型，原先直接讀取 `contractTarget` 的欄位（如 `.type`, `.publicationId`）會因對 `PersonalAuthContract` 為 `undefined` 而導致應用程式報錯無回應。
+
+## 詳細變更內容
+- [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+  - 更新 `handleSearch` 中的過濾邏輯，利用 `contractType` 正確區分並判斷欄位。
+  - 對舊有的 `contractTarget` 操作補上 `?.`，防止例外拋出。
+  - 更新批次處理選擇物件 `handleSelectAll`，針對不同合約類型給予正確的 `label`。
+
+---
+
+# 2026-03-06 新增個人授權與台版書範本資料 (Mock Data)
+## 摘要
+依據需求，為學發部的「個人授權」以及圖服部的「台版書」分別建立了 5 筆合約範本資料。
+
+## 詳細變更內容
+
+### [修改] `src/data/mockContracts.ts`
+- 新增 5 筆 `PersonalAuthContract` (個人授權) 範本資料 (ID: 11-15)。
+- 包含完整的 `personalAuthInfo` 與 `personalAuthRoyaltyInfo`，並符合最新的 Discriminated Unions 資料結構。
+
+### [修改] `src/data/mockDDDContracts.ts`
+- 新增 5 筆 `TaiwanBookContract` (台版書) 範本資料 (ID: TF-011 到 TF-015)。
+- 包含完整的台版書專屬屬性：`twBookRights`, `twBookAccounting`, `twBookLogistics`, 與 `twBookContact`。
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤。
+
+---
+
+# 2026-03-06 圖服部合約資料結構重構 (Discriminated Unions)
+
+## 摘要
+將圖書服務部合約資料結構 `TuFuContractData` 重構為 TypeScript 的 Discriminated Unions (可辨識聯合型別)，分為 `EbookMagazineContract` (電子書/電子雜誌) 與 `TaiwanBookContract` (台版書)，以提升型別安全並消除冗餘空欄位。
+
+## 詳細變更內容
+
+### [修改] `src/features/ddd/types/index.ts`
+- 建立 `BaseDDDContract` 共用基礎型別
+- 將原有合約分離為 `EbookMagazineContract` (電子書權利、範圍、帳務等) 與 `TaiwanBookContract` (台版書權利、後勤、聯絡人等)
+- 定義 `TuFuContractData = EbookMagazineContract | TaiwanBookContract`，並使用 `contractType` 作為鑑別欄位
+
+### [修改] `src/data/mockDDDContracts.ts`
+- 更新所有 mock data 補上 `contractType`
+- 針對 `contractType === 'ebook_magazine'` 的資料，移除了 `taiwan_book` 的專用欄位，確保資料輕量且符合型別
+
+### [修改] `src/features/ddd/hooks/useDDDContractForm.ts`
+- 在 `getInitialFormData` 中將結構透過 type assertion 設定為符合預期
+- 對共用的 state 操作使用型別轉換以適配 Discriminated Unions 介面
+
+### [修改] `src/pages/DDDContract.tsx` & `src/pages/DDDMaintainContract.tsx`
+- 引入 `EbookMagazineContract` 與 `TaiwanBookContract` 進行型別轉換保護
+- 依據 `contractType` 進行條件渲染時，對 `formData` 使用特定 type alias 進行存取 (例如使用 `ebookData.rightsInfo` 代替原本的 `formData.rightsInfo`)
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤解決原先圖服部的編譯錯誤。
+
+---
+
+# 2026-03-06 學發部合約資料結構重構 (Discriminated Unions)
+
+## 摘要
+將學術發展部合約資料結構 `ContractData` 重構為 TypeScript 的 Discriminated Unions (可辨識聯合型別)，分為 `JournalProceedingsContract` (期刊/論文集) 與 `PersonalAuthContract` (個人授權)，以提升型別安全、消除冗餘空欄位，並簡化條件渲染與驗證邏輯。
+
+## 詳細變更內容
+
+### [修改] `src/features/academic/types/index.ts`
+- 建立 `BaseAcademicContract` 共用基礎型別
+- 將原有合約分離為 `JournalProceedingsContract` (包含完整的權利、範圍、匯款、條款等欄位) 與 `PersonalAuthContract` (包含個人授權專屬欄位及權利金比例)
+- 定義 `ContractData = JournalProceedingsContract | PersonalAuthContract`，並使用 `contractType` 作為鑑別欄位
+
+### [修改] `src/pages/AcademicContract.tsx` & `src/pages/AcademicMaintainContract.tsx`
+- 在各個需要判斷型別的地方加上 `contractType === 'journal_proceedings'` 型別守衛 (Type Guards) 或進行安全的型別轉換
+- 更新 `getInitialFormData` 預設產生符合 `JournalProceedingsContract` 結構的資料
+
+### [修改] `src/features/academic/constants/fieldConfig.ts`
+- 修正 `condition` 回呼函式的參數存取，先確保型別正確才讀取 `terminationInfo` 等特定合約專屬屬性
+
+### [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+- 移除檔案內自行宣告的過時 `ContractData` 及相關 inline interface
+- 改由 `@/features/academic/types` import 共用型別
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤
+- ✅ Build 建置: `vite build` 成功完成
+
+---
+
+# 2026-03-06 學發部個人授權合約搜尋功能增強
+
+## 摘要
+為學發部搜尋模組新增個人授權合約的完整支援，包括 5 筆範本資料、搜尋介面調整（必填合約類型、動態提示詞）、搜尋結果專用欄位配置、以及隱藏不適用的篩選按鈕。
+
+## 詳細變更內容
+
+### [修改] `src/data/mockContracts.ts`
+- 新增 5 筆個人授權合約範本資料（ID 11-15）
+- 每筆資料包含完整的 `personalAuthInfo` 欄位（publicationId, contractNo, journalName, volumeIssue, articleTitle, authorizationDate, authorizationStatus, authorizationRegion, royaltyUid, authorName, email, phone, address, docid）
+- `contractTarget.type` 設為 `'個人授權'`
+- 涵蓋不同授權狀態：非專個人領取、非專無償、個人領取、捐贈慈善基金會
+- 涵蓋不同授權地區：全球用戶、不上CN
+
+### [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+
+**1. 搜尋表單 (SearchPage 元件)**
+- 合約標的類型改為必填：移除「全部」選項，預設值設為「期刊」，加上 `required` 屬性及紅色星號 (*) 標示
+- 動態關鍵字提示詞：當選擇「個人授權」時，placeholder 改為「搜尋PublicationID、作者姓名、論文名稱或所屬刊物名稱」
+
+**2. 個人授權專用欄位配置 (personalAuthColumnConfig)**
+- 新增 `personalAuthColumnConfig` 常數，定義 10 個預設顯示欄位：PublicationID, 合約編號, 作者, 論文名稱, 期刊名稱, 卷期, 權利金比例, 授權日期, 授權狀態, 授權地區
+
+**3. 搜尋邏輯適配 (handleSearch)**
+- 新增 `lastSearchType` 狀態追蹤搜尋類型
+- 個人授權關鍵字搜尋改為比對 `personalAuthInfo` 內的 publicationId、authorName、articleTitle、journalName
+- 個人授權日期篩選改用 `personalAuthInfo.authorizationDate`
+- 搜尋時自動切換可見欄位至對應配置
+
+**4. 搜尋結果頁面**
+- 當 `lastSearchType === '個人授權'` 時，隱藏「進階篩選」和「篩選顯示欄位」按鈕
+- `allColumns` 和 `activeColumnConfig` 根據搜尋類型動態切換
+- `renderCellContent` 新增個人授權欄位渲染（論文名稱可點擊、權利金比例顯示查看按鈕）
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc --noEmit` 成功，零錯誤
+- ✅ 瀏覽器驗證: 5 筆個人授權資料正確顯示，欄位配置正確，按鈕隱藏正常
+- ✅ 期刊搜尋功能不受影響
+
+---
+
+# 2026-03-02 學發部新增「個人授權」合約類型
+
+## 摘要
+在學術發展部的合約系統中新增「個人授權」合約標的類型。個人授權代表作者與平台單獨簽訂一篇文章的授權，權利金欄位結構與期刊/論文集完全不同，特別是沒有卷期規則的概念。採用 DDD（圖書服務部）的條件渲染模式，依據使用者選擇的「類型」動態顯示/隱藏對應的 TOC 章節 and 表單欄位。
+
+## 詳細變更內容
+
+### [修改] `src/features/academic/types/index.ts`
+- 新增 `PersonalAuthRoyaltyScheme` 介面：日期方案 + 分潤明細（無卷期規則）
+- 在 `ContractData` 新增 `personalAuthInfo` 欄位（含造冊資訊、權利內容、其他資訊共 16 個子欄位）
+- 在 `ContractData` 新增 `personalAuthRoyaltyInfo` 欄位（`PersonalAuthRoyaltyScheme[]`）
+
+### [修改] `src/features/academic/constants/tocSections.ts`
+- 新增 4 個個人授權專用 TOC 章節：
+  - `pa-registration-info`：[個人授權]造冊資訊
+  - `pa-rights-info`：[個人授權]權利內容
+  - `pa-royalty-info`：[個人授權]權利金比例  
+  - `pa-other-info`：[個人授權]其他資訊
+- 加入期刊/論文集 vs 個人授權 vs 共用章節分類註解
+
+### [修改] `src/features/academic/constants/fieldConfig.ts`
+- 新增 `pa-registration-info` 欄位群組：PublicationID、類型、合約編號、期刊名稱、卷期、論文名稱_內容
+- 新增 `pa-rights-info` 欄位群組：授權書日期、授權狀態_提領方式（select）、授權地區（select）、權利金掛UID
+- 新增 `pa-other-info` 欄位群組：作者姓名、備註、Email、電話、地址、docid
+
+### [修改] `src/features/academic/constants/contractFields.ts`
+- 更新 `sectionIdToDataKey()`：`pa-*` 前綴的章節統一對應到 `personalAuthInfo`
+- 新增個人授權欄位的 `fieldConfig` 定義（與 `fieldConfig.ts` 同步）
+- 在 `fieldKeyToNameMap` 新增 16 個個人授權欄位的 key-to-name 映射
+
+### [新增] `src/features/academic/components/PersonalAuthRoyaltyModal.tsx`
+- 從 `RoyaltyModal.tsx` 簡化而來，移除卷期規則層
+- 結構：日期方案 → 分潤明細（分潤主體 + 比例%）
+- 支援新增/移除日期方案、新增/移除分潤明細、摺疊/展開
+
+### [修改] `src/features/academic/components/index.ts`
+- 新增 `PersonalAuthRoyaltyModal` 的 export
+
+### [修改] `src/pages/AcademicContract.tsx`
+- Import `PersonalAuthRoyaltyModal` 和 `PersonalAuthRoyaltyScheme` 型別
+- 在 `getInitialFormData()` 加入 `personalAuthInfo` 和 `personalAuthRoyaltyInfo` 初始值
+- 實作條件渲染邏輯（參照 DDDContract.tsx 模式）：
+  - 選「個人授權」時隱藏期刊專用章節（8 個），顯示 pa-* 章節（4 個）
+  - 選「期刊/論文集」時隱藏 pa-* 章節
+- 將 `tocSections` → `visibleTocSections`，傳入 `FloatingTOC` 和 `map` 迴圈
+- 新增 `pa-royalty-info` 區塊渲染（含「編輯權利金規則」按鈕 + 摘要）
+- 新增 `PersonalAuthRoyaltyModal` 的 state 和 handlers
+
+### [修改] `src/features/academic/search/AcademicSearchContract.tsx`
+- 在 `SearchCriteria` 介面新增 `contractType` 欄位
+- 在 `SearchPage` 元件新增「合約標的類型」下拉選單（全部/期刊/論文集/個人授權）
+- 在 `handleSearch` 函式新增合約類型篩選邏輯
+
+## 測試結果
+- ✅ TypeScript 編譯: `tsc -b` 成功，零錯誤
+- ✅ Build 建置: `vite build` 成功完成 (6.62 秒)
+
+---
+
+
+
+## 問題
+點擊「編輯權利金規則」按鈕時會意外觸發未填寫提示驗證。
+
+## 原因
+按鈕位於 `<form>` 內但缺少 `type="button"` 屬性，導致點擊時觸發表單提交（`handleSubmit` → `handleValidation()`）。
+
+## 解決方案
+### [修改] `src/pages/AcademicContract.tsx`
+- 在「編輯權利金規則」按鈕新增 `type="button"` 屬性，防止觸發表單提交
+
+## 測試結果
+- ✅ Build: 成功完成 (12.46 秒)
+
+---
+
+
+
+## 變更內容
+
+### [修改] `src/features/academic/components/RoyaltyModal.tsx`
+- **移除分潤比例未滿 100% 的警告提示**：刪除 `percentageWarnings` useMemo 與相關 JSX
+- 移除未使用的 import：`useMemo`、`AlertCircle`
+
+### [修改] `src/features/academic/constants/fieldConfig.ts`
+- 統一匯款欄位 label 以符合使用者規格：
+  - `帳戶類別` radio 選項 `國外` → `海外`
+  - `銀行帳號` → `帳號`
+  - `帳務備註` (textarea) → `帳號密碼_帳戶備註` (text)
+  - `身分證字號` → `身份證字號`
+  - `版稅結算月份` → `權利金_明定結算月份`
+  - `收付款流程` → `權利金_先給錢_後給收據`
+
+### [修改] `src/features/academic/constants/contractFields.ts`
+- 新增 `beneficiary` (分潤主體) readonly 欄位
+- `國內/外帳戶` → `帳戶類別`
+- `accountNotes` 新增 `fullWidth: true`
+- 新增 `isReadOnly` 至本地 `FormFieldConfig` 介面
+
+### 驗證時機確認
+未填寫驗證提示原本就只在使用者點擊「儲存合約」按鈕時才觸發（`handleSubmit` → `handleValidation()`），無需修改 ✅
+
+## 測試結果
+- ✅ Build: 成功完成 (6.72 秒)
+
+---
+
+
+
+## 摘要
+針對學發部新增合約的三大核心欄位（簽約單位、編輯權利金比例、匯款資料），補齊缺漏的 UI 功能並將內嵌程式碼重構為獨立元件，提升可維護性。
+
+## 詳細變更內容
+
+### [修改] `src/components/ui/Modal.tsx`
+- **新增 `full` 尺寸選項**：`max-w-5xl`，供權利金 Modal 等需要較大空間的場景使用
+- `size` prop 類型更新：`'sm' | 'md' | 'lg' | 'xl'` → `'sm' | 'md' | 'lg' | 'xl' | 'full'`
+
+### [新增] `src/features/academic/components/RoyaltyModal.tsx`
+從 `AcademicContract.tsx` 抽取約 100 行權利金 Modal 內嵌程式碼為獨立元件，新增功能：
+1. **卷期格式自動同步**：修改起始卷期的格式（卷/期、年/月、文字描述）時，自動同步至結束卷期
+2. **三層視覺差異化**：
+   - 日期方案 (DateScheme)：紫色邊框卡片，含摺疊/展開功能
+   - 卷期規則 (VolumeRule)：白色內嵌卡片，附小圓點指示
+   - 分潤明細 (RoyaltySplit)：表格式排版（分潤主體 + 比例列）
+3. **分潤比例合計驗證**：每組 VolumeRule 下的分潤比例加總 ≠ 100% 時，顯示琥珀色警告 badge
+4. **可摺疊日期方案**：點擊標題列摺疊/展開，摺疊時顯示日期摘要
+5. **使用 `size="full"` Modal**：提供 `max-w-5xl` 的充足空間
+6. **保留 datalist 連動**：分潤主體欄位自動顯示簽約單位作為建議
+
+### [新增] `src/features/academic/components/RemittanceSection.tsx`
+從 `AcademicContract.tsx` 抽取匯款區塊為獨立元件，新增功能：
+1. **空狀態引導**：無匯款資料時顯示錢包 icon + 說明文字 + 操作建議
+2. **可摺疊受款人卡片**：每張卡片預設摺疊，僅顯示受款人名稱 + 帳戶類型 + 完成度 badge
+3. **帳戶資料完成度 badge**：
+   - 綠色「資料完整」：銀行名稱、帳號、戶名、幣別四欄已填
+   - 琥珀色「X/4 已填寫」：尚有未填欄位
+4. **全部展開/摺疊按鈕**：右上角快速操作
+5. **內建 RemittanceFormField**：簡化版表單欄位渲染，支援 text、radio、textarea
+
+### [修改] `src/features/academic/components/index.ts`
+- 新增 `RoyaltyModal` 和 `RemittanceSection` 的 export
+
+### [修改] `src/pages/AcademicContract.tsx`
+- **移除約 200 行內嵌程式碼**：
+  - 移除 `getInitialRoyaltySplit`、`getInitialVolumeRule` helper functions
+  - 移除 `tempRoyaltyInfo` state 和所有 royalty CRUD 函數
+  - 移除 `renderRoyaltyVolumeInputsForModal` 函數
+  - 移除內嵌 `<Modal>` 權利金 JSX（約 90 行）
+  - 移除內嵌匯款區塊 JSX（約 30 行）
+- **引入新元件**：`<RoyaltyModal>` 和 `<RemittanceSection>`
+- **新增權利金摘要**：權利金區塊顯示「已設定 X 個日期方案，共 Y 組卷期規則」
+- **移除未使用的 import**：`Plus`, `Trash2`, `Modal`, `RoyaltySplit`, `VolumeRule`
+
+### [修改] `src/features/academic/constants/contractFields.ts`
+- 修正 `contractParty` 欄位定義：`type: 'text'` → `type: 'tags'`
+- 新增 `placeholder: '新增單位後按 Enter...'`
+- 與 `fieldConfig.ts` 保持一致
+
+## 測試結果
+- ✅ TypeScript 編譯: 成功，零錯誤
+- ✅ Build 建置: 成功完成 (10.01 秒)
+
+---
+
+
+
+## 摘要
+將「權限管理」模組中的「建立新使用者」、「編輯使用者權限」及「刪除確認」彈出視窗，從手刻 inline HTML 重構為使用共用 `Modal` + `Button` 元件，與「範本管理 → 上傳新範本」視窗樣式完全一致。
+
+## 詳細變更內容
+
+### [修改] `src/features/settings/components/UserManagement.tsx`
+
+1. **新增 import**
+   - `import { Button } from '@/components/ui/Button';`
+   - `import { Modal } from '@/components/ui/Modal';`
+
+2. **頁面頂部「建立新使用者」按鈕**
+   - 從 `<button className="px-4 py-2 bg-indigo-600 ...">` 改為 `<Button>` 元件
+   - 自動獲得統一的 hover shadow、active scale 動畫效果
+
+3. **建立/編輯使用者彈出視窗 (原 Lines 158-205)**
+   - 從 `<div className="fixed inset-0 bg-black bg-opacity-50 ...">` 手刻 modal 改為 `<Modal>` 元件
+   - 新增功能：backdrop-blur 背景模糊、ESC 鍵關閉、標題列 X 關閉按鈕、hover 半透明效果
+   - Footer 按鈕（取消/儲存設定）改用 `<Button variant="secondary">` 和 `<Button variant="primary">`
+   - 使用 `size="xl"` 匹配原有 max-w-2xl 寬度
+
+4. **刪除確認彈出視窗 (原 Lines 207-225)**
+   - 從手刻確認對話框改為 `<Modal size="sm">` 元件
+   - 「確認刪除」按鈕改用 `<Button variant="danger">`，統一紅色 hover/active 動畫
+   - 「取消」按鈕改用 `<Button variant="secondary">`
+   - 保留 AlertTriangle 警告圖示
+
+5. **系統權限設定勾選選項樣式升級**
+   - 從 plain HTML checkbox + 灰底 hover 改為 **toggle switch**（滑動開關）
+   - 樣式與「通知設定」模組的啟用/停用開關完全一致（indigo 主題色）
+   - 改為單欄垂直排列（原為 2x3 grid），每項包含名稱 + 說明文字
+   - 新增 hover 效果：border 變為 indigo、背景淡紫色
+   - 點擊整行即可切換，不限於開關本身
+
+## 測試結果
+- ✅ TypeScript 編譯: 成功,無錯誤
+- ✅ UI 一致性: 與範本管理的上傳新範本視窗樣式完全一致
+
+---
+
+# 2026-02-11 (下午) Git 重置
 
 ## 變更內容
 - **移除舊的 .git 目錄:** 使用 `Remove-Item -Recurse -Force .git` 移除整個舊的 Git 歷史紀錄
@@ -152,7 +583,7 @@ Exit code: 0
 
 ## 技術決策
 1. **使用 PowerShell Move-Item 而非 git mv:** 因遇到 Git 鎖定檔案問題,改用 PowerShell 命令執行檔案/資料夾重新命名
-2. **段階式更新 import:** 先更新資料夾路徑,再更新檔案名稱,最後更新 import 語句,降低錯誤風險
+2. **階段式更新 import:** 先更新資料夾路徑,再更新檔案名稱,最後更新 import 語句,降低錯誤風險
 3. **保留部分 TuFu 命名:** `TuFuContractData` 等型別名稱保持不變,因為這些是圖書服務部專屬的資料結構定義,與業務邏輯緊密相關
 
 ## 後續建議
@@ -345,7 +776,7 @@ Exit code: 0
 
 ### 修正與優化
 1.  **[修改] 學發部合約 - 合約標的類型欄位**
-    - 將 `fieldConfig.ts` 中的 `type` 欄位型別從文字輸入 (`text`) 改為下拉式選單 (`select`)。
+    - 將 `fieldConfig.ts` 中的 `type` 欄位型態從文字輸入 (`text`) 改為下拉式選單 (`select`)。
     - 設定固定選項：`['期刊', '論文集', '個人授權']`。
 2.  **[修正] GitHub Actions Workflow YAML 語法錯誤**
     - 修正 `deploy.yml` 中 `Build` 步驟的縮排錯誤，解決 "Implicit map keys need to be followed by map values" 錯誤。
@@ -353,33 +784,3 @@ Exit code: 0
 ### 程式碼變更
 -   **[MODIFY]** `src/features/academic/constants/fieldConfig.ts`: 更新欄位定義。
 -   **[MODIFY]** `.github/workflows/deploy.yml`: 修正 YAML 縮排。
-
-# 2026-01-20 變更紀錄
-# 2026-02-11 (下�?) Git Repo ?�置?�代碼修�?
-
-## ?��?
-完�? Git Repository ?��?置工作�?�?��了�??��??�步?��??��??��??��?殘�???`TuFuContract.tsx` ?�件，並修復了相?��?導入路�??��??�命?��?確�?�?��庫�??��??��??�性�?
-
-## 詳細變更?�容
-
-### 1. Git Repository ?�置
-- **移除??.git:** 強制移除?��??�卡住�???`.git` ?��???
-- **?�新?��???** ?��? `git init` ?�新?��???repository??
-- **?��??�交:** 將�??�當?��?件�??�並?��? `git commit -m "Initial commit"`，建立全?��??�本起�???
-
-### 2. 檔�?清�??�路徑修�?
-- **移除?��?:** 確�? `src/pages/TuFuContract.tsx` 已被移除，由 `src/pages/DDDContract.tsx` ?�代??
-- **路由?�新:** 驗�? `App.tsx` 中�?路由?�置，確�?`DDDContract` ??`DDDMaintainContract` �?��對�? `/ddd/*` 路�???
-
-### 3. �?��?��??�修�?
-- **導入路�?修正:** ??`DDDContract.tsx` ??`DDDMaintainContract.tsx` 中�?將�??��? `@/features/tufu/*` 導入路�??�新??`@/features/ddd/*`??
-- **變�??��?統�?:**
-    - `src/features/ddd/constants/tocSections.ts`: 將�??��???`tuFuTocSections` ?�命?�為 `dddTocSections`??
-    - `src/pages/DDDContract.tsx` & `src/pages/DDDMaintainContract.tsx`: ?�步?�新引用，�? `tuFuTocSections` ?��???`dddTocSections`??
-
-## 測試結�?
-- **編譯檢查:** 確�??�?�修?��??��?件無 TypeScript 編譯?�誤（�??�路徑錯誤已�?��）�?
-- **路由檢查:** 路由?�置�?��?��??��? DDD 組件??
-
-## 後�?行�?
-- 準�?將代碼推?�到?��? GitHub Repository（�?待使?�者�?�?URL）�?

@@ -3,7 +3,7 @@ export const dropdownOptions: { [key: string]: { value: string; label: string }[
     'basicInfo.contractTargetType': [
         { value: 'ebook', label: '電子書' },
         { value: 'ejournal', label: '電子雜誌' },
-        { value: 'taiwaneseBook', label: '台版書' }
+        { value: 'taiwan_book', label: '台版書' }
     ],
     'accountingInfo.entityType': [
         { value: 'public', label: '公部門' },

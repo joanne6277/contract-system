@@ -72,28 +72,48 @@ export const fieldConfig: { [sectionId: string]: FormFieldConfig[] } = {
     ],
     'remittance-info': [
         { id: 'beneficiary', label: '分潤主體', type: 'text', fullWidth: true, isReadOnly: true },
-        { id: 'accountType', label: '帳戶類別', type: 'radio', options: ['國內', '國外'] },
+        { id: 'accountType', label: '帳戶類別', type: 'radio', options: ['國內', '海外'] },
         { id: 'accountName', label: '戶名', type: 'text' },
         { id: 'checkTitle', label: '支票抬頭', type: 'text' },
         { id: 'currency', label: '幣別', type: 'text' },
         { id: 'bankName', label: '銀行名稱', type: 'text' },
         { id: 'branchName', label: '分行名稱', type: 'text' },
-        { id: 'accountNumber', label: '銀行帳號', type: 'text' },
-        { id: 'accountNotes', label: '帳務備註', type: 'textarea', fullWidth: true },
+        { id: 'accountNumber', label: '帳號', type: 'text' },
+        { id: 'accountNotes', label: '帳號密碼_帳戶備註', type: 'text', fullWidth: true },
         { id: 'taxId', label: '統一編號', type: 'text' },
-        { id: 'idNumber', label: '身分證字號', type: 'text' },
-        { id: 'royaltySettlementMonth', label: '版稅結算月份', type: 'text' },
-        { id: 'paymentReceiptFlow', label: '收付款流程', type: 'text' },
+        { id: 'idNumber', label: '身份證字號', type: 'text' },
+        { id: 'royaltySettlementMonth', label: '權利金_明定結算月份', type: 'text' },
+        { id: 'paymentReceiptFlow', label: '權利金_先給錢_後給收據', type: 'text' },
     ],
     'termination-info': [
         { id: 'isTerminated', label: '解約', type: 'radio', options: ['是', '否'] },
-        { id: 'terminationReason', label: '解約原因', type: 'text', condition: (formData: ContractData) => formData.terminationInfo?.isTerminated === '是' },
-        { id: 'terminationDate', label: '解約日期', type: 'date', condition: (formData: ContractData) => formData.terminationInfo?.isTerminated === '是' },
-        { id: 'terminationMethod', label: '解約方式', type: 'text', condition: (formData: ContractData) => formData.terminationInfo?.isTerminated === '是' },
+        { id: 'terminationReason', label: '解約原因', type: 'text', condition: (formData: ContractData) => formData.contractType === 'journal_proceedings' && formData.terminationInfo?.isTerminated === '是' },
+        { id: 'terminationDate', label: '解約日期', type: 'date', condition: (formData: ContractData) => formData.contractType === 'journal_proceedings' && formData.terminationInfo?.isTerminated === '是' },
+        { id: 'terminationMethod', label: '解約方式', type: 'text', condition: (formData: ContractData) => formData.contractType === 'journal_proceedings' && formData.terminationInfo?.isTerminated === '是' },
     ],
     'remarks': [
         { id: 'remarks', label: '', type: 'textarea' },
-    ]
+    ],
+    // --- 個人授權專用欄位 ---
+    'pa-registration-info': [
+        { id: 'publicationId', label: 'PublicationID', type: 'text' },
+        { id: 'type', label: '類型', type: 'select', options: ['期刊', '論文集', '個人授權'] },
+        { id: 'contractNo', label: '合約編號', type: 'text' },
+        { id: 'journalName', label: '期刊名稱', type: 'text' },
+        { id: 'volumeIssue', label: '卷期', type: 'text' },
+        { id: 'articleTitle', label: '論文名稱_內容', type: 'text', fullWidth: true },
+    ],
+    'pa-rights-info': [
+        { id: 'authorizationDate', label: '授權書日期', type: 'date' },
+        { id: 'authorizationStatus', label: '授權狀態_提領方式', type: 'select', options: ['非專個人領取', '非專無償', '個人領取', '捐贈慈善基金會'] },
+        { id: 'authorizationRegion', label: '授權地區', type: 'select', options: ['不上CN', '不上CN_含港澳', '全球用戶'] },
+        { id: 'royaltyUid', label: '權利金掛UID', type: 'text' },
+    ],
+    'pa-other-info': [
+        { id: 'authors', label: '作者資料', type: 'custom', fullWidth: true },
+        { id: 'paRemarks', label: '備註', type: 'textarea', fullWidth: true },
+        { id: 'docid', label: 'docid', type: 'text' },
+    ],
 };
 
 export const defaultSearchColumns: SearchColumn[] = [

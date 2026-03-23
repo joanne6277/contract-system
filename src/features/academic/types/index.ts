@@ -30,6 +30,14 @@ export interface DateScheme {
     volumeRules: VolumeRule[];
 }
 
+// 個人授權專用：日期方案 + 分潤明細（無卷期規則）
+export interface PersonalAuthRoyaltyScheme {
+    id: string;
+    startDate: string;
+    endDate: string;
+    royaltySplits: RoyaltySplit[];
+}
+
 export interface EmbargoRule {
     id: string;
     target: string;
@@ -53,9 +61,19 @@ export interface RemittanceInfoItem {
     paymentReceiptFlow: string;
 }
 
-// 學發部 ContractData
-export interface ContractData {
+export type AcademicContractType = 'journal_proceedings' | 'personal_auth';
+
+export interface BaseAcademicContract {
     id?: string;
+    contractType: AcademicContractType;
+    remarks: string;
+    scanFile?: File | string | null;
+    createdAt?: Date;
+    maintenanceHistory?: unknown[];
+}
+
+export interface JournalProceedingsContract extends BaseAcademicContract {
+    contractType: 'journal_proceedings';
     contractTarget: {
         publicationId: string;
         type: string;
@@ -126,11 +144,38 @@ export interface ContractData {
         terminationMethod: string;
     };
     royaltyInfo: DateScheme[];
-    remarks: string;
-    scanFile?: File | string | null;
-    createdAt?: Date;
-    maintenanceHistory?: unknown[];
 }
+
+export interface AuthorInfo {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+}
+
+export interface PersonalAuthContract extends BaseAcademicContract {
+    contractType: 'personal_auth';
+    personalAuthInfo: {
+        publicationId: string;
+        type: string;
+        contractNo: string;
+        journalName: string;
+        volumeIssue: string;
+        articleTitle: string;
+        authorizationDate: string;
+        authorizationStatus: string;
+        authorizationRegion: string;
+        royaltyUid: string;
+        authorName: string; // 用於快速顯示/搜尋的彙總欄位 (例: "作者1, 作者2")
+        authors: AuthorInfo[];
+        paRemarks: string;
+        docid: string;
+    };
+    personalAuthRoyaltyInfo: PersonalAuthRoyaltyScheme[];
+}
+
+export type ContractData = JournalProceedingsContract | PersonalAuthContract;
 
 export interface SearchColumn {
     id: string;

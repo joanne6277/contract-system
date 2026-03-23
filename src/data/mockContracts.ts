@@ -4,6 +4,7 @@ import type { ContractData } from '../features/academic/types';
 export const sampleContracts: ContractData[] = [
     {
         id: '1',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P12345',
             type: '期刊',
@@ -90,6 +91,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '2',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P23456',
             type: '期刊',
@@ -166,6 +168,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '3',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P34567',
             type: '期刊',
@@ -242,6 +245,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '4',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P45678',
             type: '期刊',
@@ -318,6 +322,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '5',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P56789',
             type: '期刊',
@@ -394,6 +399,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '6',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P67890',
             type: '期刊',
@@ -470,6 +476,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '7',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P78901',
             type: '期刊',
@@ -546,6 +553,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '8',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P89012',
             type: '期刊',
@@ -622,6 +630,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '9',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P90123',
             type: '期刊',
@@ -698,6 +707,7 @@ export const sampleContracts: ContractData[] = [
     },
     {
         id: '10',
+        contractType: 'journal_proceedings',
         contractTarget: {
             publicationId: 'P01234',
             type: '期刊',
@@ -772,4 +782,137 @@ export const sampleContracts: ContractData[] = [
         createdAt: new Date('2024-01-15'),
         maintenanceHistory: []
     },
+    {
+        id: '11',
+        contractType: 'personal_auth',
+        personalAuthInfo: {
+            publicationId: 'PA-001',
+            type: '個人授權',
+            contractNo: 'PA-2024-001',
+            journalName: '臺灣教育研究期刊',
+            volumeIssue: '第15卷第3期',
+            articleTitle: '生成式 AI 於教育的應用與挑戰',
+            authorizationDate: '2024-03-01',
+            authorizationStatus: '非專個人領取',
+            authorizationRegion: '全球用戶',
+            royaltyUid: 'U-12345',
+            authorName: '張大明',
+            authors: [
+                { id: 'a1', name: '張大明', email: 'daming@example.com', phone: '0912345678', address: '台北市大安區' }
+            ],
+            paRemarks: '無',
+            docid: 'doc-pa-001'
+        },
+        personalAuthRoyaltyInfo: [
+            { id: 'rs-001', startDate: '2024-03-01', endDate: '2026-02-28', royaltySplits: [{ id: 'split-1', beneficiary: '張大明', percentage: '100' }] }
+        ],
+        remarks: '教育類重點關注',
+        createdAt: new Date('2024-03-01')
+    },
+    {
+        id: '12',
+        contractType: 'personal_auth',
+        personalAuthInfo: {
+            publicationId: 'PA-002',
+            type: '個人授權',
+            contractNo: 'PA-2024-002',
+            journalName: '物理學報',
+            volumeIssue: '第50卷第2期',
+            articleTitle: '量子計算的未來展望',
+            authorizationDate: '2024-04-15',
+            authorizationStatus: '非專無償',
+            authorizationRegion: '不上CN',
+            royaltyUid: 'U-23456',
+            authorName: '李小華',
+            authors: [
+                { id: 'a2', name: '李小華', email: 'xiaohua.li@example.com', phone: '0923456789', address: '新竹市光復路' }
+            ],
+            paRemarks: '無償提供',
+            docid: 'doc-pa-002'
+        },
+        personalAuthRoyaltyInfo: [],
+        remarks: '無償授權',
+        createdAt: new Date('2024-04-15')
+    },
+    {
+        id: '13',
+        contractType: 'personal_auth',
+        personalAuthInfo: {
+            publicationId: 'PA-003',
+            type: '個人授權',
+            contractNo: 'PA-2023-112',
+            journalName: '農業環境科學',
+            volumeIssue: '第33卷第4期',
+            articleTitle: '氣候變遷對台灣農業的影響',
+            authorizationDate: '2023-11-20',
+            authorizationStatus: '捐贈慈善基金會',
+            authorizationRegion: '全球用戶',
+            royaltyUid: 'U-34567',
+            authorName: '陳冠宇',
+            authors: [
+                { id: 'a3', name: '陳冠宇', email: 'kuanyu@example.com', phone: '0934567890', address: '台中市西屯區' }
+            ],
+            paRemarks: '收益捐出',
+            docid: 'doc-pa-003'
+        },
+        personalAuthRoyaltyInfo: [
+            { id: 'rs-003', startDate: '2023-11-20', endDate: '2099-12-31', royaltySplits: [{ id: 'split-3', beneficiary: '伊甸基金會', percentage: '100' }] }
+        ],
+        remarks: '公益',
+        createdAt: new Date('2023-11-20')
+    },
+    {
+        id: '14',
+        contractType: 'personal_auth',
+        personalAuthInfo: {
+            publicationId: 'PA-004',
+            type: '個人授權',
+            contractNo: 'PA-2024-025',
+            journalName: '社會政策研究',
+            volumeIssue: '第12期',
+            articleTitle: '高齡化社會的社會福利政策分析',
+            authorizationDate: '2024-05-10',
+            authorizationStatus: '個人領取',
+            authorizationRegion: '不上CN含港澳',
+            royaltyUid: 'U-45678',
+            authorName: '林雅婷',
+            authors: [
+                { id: 'a4', name: '林雅婷', email: 'yating.lin@example.com', phone: '0945678901', address: '台南市東區' }
+            ],
+            paRemarks: '限區域',
+            docid: 'doc-pa-004'
+        },
+        personalAuthRoyaltyInfo: [
+            { id: 'rs-004', startDate: '2024-05-10', endDate: '2027-04-30', royaltySplits: [{ id: 'split-4', beneficiary: '林雅婷', percentage: '100' }] }
+        ],
+        remarks: '社會科學',
+        createdAt: new Date('2024-05-10')
+    },
+    {
+        id: '15',
+        contractType: 'personal_auth',
+        personalAuthInfo: {
+            publicationId: 'PA-005',
+            type: '個人授權',
+            contractNo: 'PA-2024-031',
+            journalName: '物理雙月刊',
+            volumeIssue: '第46卷第1期',
+            articleTitle: '台灣微中子實驗初探',
+            authorizationDate: '2024-06-05',
+            authorizationStatus: '非專個人領取',
+            authorizationRegion: '全球用戶',
+            royaltyUid: 'U-56789',
+            authorName: '吳宗憲',
+            authors: [
+                { id: 'a5', name: '吳宗憲', email: 'wutz@example.com', phone: '0956789012', address: '桃園市中壢區' }
+            ],
+            paRemarks: '重要研究',
+            docid: 'doc-pa-005'
+        },
+        personalAuthRoyaltyInfo: [
+            { id: 'rs-005', startDate: '2024-06-05', endDate: '2029-06-04', royaltySplits: [{ id: 'split-5', beneficiary: '吳宗憲', percentage: '100' }] }
+        ],
+        remarks: '基礎科學',
+        createdAt: new Date('2024-06-05')
+    }
 ];

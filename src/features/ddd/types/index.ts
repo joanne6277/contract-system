@@ -117,8 +117,11 @@ export interface TaiwaneseBookContact {
 }
 
 // 圖書服務部 (DDD) 專用的 ContractData
-export interface TuFuContractData {
+export type DDDContractType = 'ebook_magazine' | 'taiwan_book';
+
+export interface BaseDDDContract {
     id?: string;
+    contractType: DDDContractType;
     registrationInfo: {
         airitiContractNo: string;
         ebookContractNo: string;
@@ -143,6 +146,14 @@ export interface TuFuContractData {
         specialPenalties: string;
         jurisdiction: string;
     };
+    remarks: string;
+    scanFile?: File | string | null;
+    createdAt?: Date;
+    maintenanceHistory?: unknown[];
+}
+
+export interface EbookMagazineContract extends BaseDDDContract {
+    contractType: 'ebook_magazine';
     rightsInfo: {
         trialPercentage: PercentageWithTextData;
         printingPercentage: PercentageWithTextData;
@@ -193,15 +204,17 @@ export interface TuFuContractData {
         bankAddress: string;
         remittanceNotes: string;
     };
+}
+
+export interface TaiwanBookContract extends BaseDDDContract {
+    contractType: 'taiwan_book';
     twBookRights: TaiwaneseBookRights;
     twBookAccounting: TaiwaneseBookAccounting;
     twBookLogistics: TaiwaneseBookLogistics;
     twBookContact: TaiwaneseBookContact;
-    remarks: string;
-    scanFile?: File | string | null;
-    createdAt?: Date;
-    maintenanceHistory?: unknown[];
 }
+
+export type TuFuContractData = EbookMagazineContract | TaiwanBookContract;
 
 // 重新導出共用型別
 export type { CheckboxWithTextData, DropdownWithTextData, PercentageWithTextData } from '../../../shared/types';

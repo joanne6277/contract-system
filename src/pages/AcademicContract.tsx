@@ -1,11 +1,8 @@
 
-import React, { useState, useEffect, useRef } from 'react'; // Added useEffect
-import { Upload, Save, RefreshCw, Plus, Trash2, Download } from 'lucide-react'; // Added Download
+import React, { useState, useEffect, useRef } from 'react';
+import { Upload, Save, Download } from 'lucide-react';
 import { FloatingTOC, TagInput, CascadingSelect } from '@/components/common';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
-
-// 引入設定檔
 
 // 引入設定檔
 import { tocSections, fieldConfig } from '@/features/academic/constants';
@@ -13,36 +10,40 @@ import { validationRules } from '@/features/academic/constants/validationRules';
 import { fieldKeyToNameMap } from '@/features/academic/constants/contractFields';
 
 // 引入型別
-import type { ContractData, RoyaltySplit, VolumeRule, DateScheme, RemittanceInfoItem, VolumeIdentifier, FormFieldConfig } from '@/features/academic/types';
+import type { ContractData, DateScheme, RemittanceInfoItem, VolumeIdentifier, FormFieldConfig, PersonalAuthRoyaltyScheme } from '@/features/academic/types';
 // 引入自定義 Hook
 import { useContractForm } from '@/shared/hooks';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
 import { ValidationWarningPanel } from '@/components/common';
+// 引入學發部專用元件
+import { RoyaltyModal, RemittanceSection, PersonalAuthRoyaltyModal, AuthorListSection } from '@/features/academic/components';
 
 
 // --- 1. 輔助函式與初始資料 (Helper Functions & Initial Data) ---
-// ... (保留原有的 Helper Functions: getInitialRoyaltySplit, getInitialVolumeRule 等) ...
-const getInitialRoyaltySplit = (): RoyaltySplit => ({
-    id: `rs - ${Date.now()} -${Math.random()} `,
-    beneficiary: '',
-    percentage: '',
-});
-
 const getInitialVolumeIdentifier = (): VolumeIdentifier => ({ format: 'volume_issue', volume: '', issue: '', year: '', month: '', description: '' });
 
-const getInitialVolumeRule = (): VolumeRule => ({
-    id: `vr - ${Date.now()} -${Math.random()} `,
-    startVolumeInfo: getInitialVolumeIdentifier(),
-    endVolumeInfo: getInitialVolumeIdentifier(),
-    royaltySplits: [getInitialRoyaltySplit()],
+const getInitialAuthor = (): any => ({
+    id: `author-${Date.now()}-${Math.random()}`,
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
 });
 
 const getInitialDateScheme = (startDate: string = '', endDate: string = ''): DateScheme => ({
-    id: `ds - ${Date.now()} -${Math.random()} `, startDate, endDate, volumeRules: [getInitialVolumeRule()]
+    id: `ds-${Date.now()}-${Math.random()}`,
+    startDate,
+    endDate,
+    volumeRules: [{
+        id: `vr-${Date.now()}-${Math.random()}`,
+        startVolumeInfo: getInitialVolumeIdentifier(),
+        endVolumeInfo: getInitialVolumeIdentifier(),
+        royaltySplits: [{ id: `rs-${Date.now()}-${Math.random()}`, beneficiary: '', percentage: '' }],
+    }],
 });
 
 const getInitialRemittanceInfoItem = (beneficiary: string): RemittanceInfoItem => ({
-    id: `remit - ${Date.now()} -${Math.random()} `,
+    id: `remit-${Date.now()}-${Math.random()}`,
     beneficiary: beneficiary,
     accountType: '國內',
     accountName: '',
@@ -60,7 +61,8 @@ const getInitialRemittanceInfoItem = (beneficiary: string): RemittanceInfoItem =
 
 const getInitialFormData = (): ContractData => {
     return {
-        contractTarget: { publicationId: '', type: '', title: '', volumeInfo: '', issnIsbn: '' },
+        contractType: 'journal_proceedings',
+        contractTarget: { publicationId: '', type: '期刊', title: '', volumeInfo: '', issnIsbn: '' },
         registrationInfo: { managementNo: '', departmentNo: '', departmentSubNo: '', collector: '', asResponsible: '', isCurrent: '否', contractVersion: [], nonAiritiVersion: '' },
         basicInfo: { partyARep: '', partyBRep: '', contractParty: [], contractStartDate: '', contractEndDate: '', autoRenewYears: '', autoRenewFrequency: '', thereafter: '否', specialDateInfo: '' },
         rightsInfo: { authorizationFormMain: '', authorizationFormSub: '', paymentType: '有償', isOpenAccess: '無' },
@@ -69,9 +71,26 @@ const getInitialFormData = (): ContractData => {
         terminationInfo: { isTerminated: '否', terminationReason: '', terminationDate: '', terminationMethod: '' },
         royaltyInfo: [getInitialDateScheme()],
         remittanceInfo: [],
+        personalAuthInfo: {
+            publicationId: '',
+            type: '個人授權',
+            contractNo: '',
+            journalName: '',
+            volumeIssue: '',
+            articleTitle: '',
+            authorizationDate: '',
+            authorizationStatus: '非專個人領取',
+            authorizationRegion: '全球用戶',
+            royaltyUid: '',
+            authorName: '',
+            authors: [getInitialAuthor()],
+            paRemarks: '',
+            docid: ''
+        },
+        personalAuthRoyaltyInfo: [],
         remarks: '',
         scanFile: null
-    };
+    } as any;
 };
 
 // Define an interface for FormField props
@@ -179,20 +198,34 @@ const AcademicContract: React.FC = () => {
 
     // --- 狀態管理 (保留頁面特有狀態) ---
     const [contracts] = useState<ContractData[]>(() => {
-        const sample = getInitialFormData();
+        const sample = getInitialFormData() as Extract<ContractData, { contractType: 'journal_proceedings' }>;
         sample.registrationInfo.managementNo = 'MGT-001';
         sample.contractTarget.title = '範例合約一';
         return [sample];
     });
     const [isRoyaltyModalOpen, setIsRoyaltyModalOpen] = useState(false);
-    const [tempRoyaltyInfo, setTempRoyaltyInfo] = useState<DateScheme[]>([]);
     const [importMgmtNo, setImportMgmtNo] = useState('');
 
     const mainContentRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // 個人授權權利金 Modal 狀態
+    const [isPaRoyaltyModalOpen, setIsPaRoyaltyModalOpen] = useState(false);
+
+    // 依合約類型過濾 TOC 章節（參照 DDDContract.tsx 的條件渲染模式）
+    const contractType = formData.contractType === 'personal_auth' ? '個人授權' : formData.contractTarget.type;
+    const isPersonalAuth = contractType === '個人授權';
+    const journalSections = ['contract-target', 'registration-info', 'termination-info', 'basic-info', 'rights-info', 'royalty-info', 'scope-info', 'other-clauses', 'remittance-info'];
+    const paSections = ['pa-registration-info', 'pa-rights-info', 'pa-royalty-info', 'pa-other-info'];
+    const visibleTocSections = tocSections.filter(section => {
+        if (isPersonalAuth && journalSections.includes(section.id)) return false;
+        if (!isPersonalAuth && paSections.includes(section.id)) return false;
+        return true;
+    });
+
     // 日期連動邏輯
     useEffect(() => {
+        if (formData.contractType !== 'journal_proceedings') return;
         const { contractStartDate, contractEndDate } = formData.basicInfo;
         const royaltyInfo = formData.royaltyInfo;
         if (contractStartDate && contractEndDate && royaltyInfo && royaltyInfo.length === 1) {
@@ -200,14 +233,15 @@ const AcademicContract: React.FC = () => {
             const isSchemeEmpty = !firstScheme.startDate && !firstScheme.endDate;
             if (isSchemeEmpty) {
                 setFormData(prev => {
-                    const newFormData = JSON.parse(JSON.stringify(prev));
+                    if (prev.contractType !== 'journal_proceedings') return prev;
+                    const newFormData = JSON.parse(JSON.stringify(prev)) as Extract<ContractData, { contractType: 'journal_proceedings' }>;
                     newFormData.royaltyInfo[0].startDate = contractStartDate;
                     newFormData.royaltyInfo[0].endDate = contractEndDate;
                     return newFormData;
                 });
             }
         }
-    }, [formData.basicInfo, setFormData, formData.royaltyInfo]); // Added missing dependencies
+    }, [formData, setFormData]); // Simplified dependencies
 
     // --- 頁面專屬邏輯 (匯入、提交、Modal) ---
     const handleImportData = () => {
@@ -215,10 +249,13 @@ const AcademicContract: React.FC = () => {
             showMessage('請輸入要匯入的舊合約管理部編號。', 'error');
             return;
         }
-        const sourceContract = contracts.find(c => c.registrationInfo.managementNo === importMgmtNo.trim());
+        const sourceContract = contracts.find(c =>
+            c.contractType === 'journal_proceedings' &&
+            c.registrationInfo.managementNo === importMgmtNo.trim()
+        );
 
         if (sourceContract) {
-            const importedData = JSON.parse(JSON.stringify(sourceContract));
+            const importedData = JSON.parse(JSON.stringify(sourceContract)) as Extract<ContractData, { contractType: 'journal_proceedings' }>;
 
             importedData.basicInfo.contractStartDate = '';
             importedData.basicInfo.contractEndDate = '';
@@ -279,108 +316,21 @@ const AcademicContract: React.FC = () => {
         showMessage('合約資料已成功儲存！');
     };
 
-    const openRoyaltyModal = () => {
-        setTempRoyaltyInfo(JSON.parse(JSON.stringify(formData.royaltyInfo)));
-        setIsRoyaltyModalOpen(true);
-    };
+    const openRoyaltyModal = () => setIsRoyaltyModalOpen(true);
     const closeRoyaltyModal = () => setIsRoyaltyModalOpen(false);
-    const saveRoyaltyChanges = () => {
-        setFormData(prev => ({ ...prev, royaltyInfo: tempRoyaltyInfo }));
-        closeRoyaltyModal();
-    };
-    const handleTempRoyaltyChange = (path: string, value: any) => {
-        setTempRoyaltyInfo(prev => {
-            const keys = path.split('.');
-            const newInfo = JSON.parse(JSON.stringify(prev));
-            let target = newInfo;
-            for (let i = 0; i < keys.length - 1; i++) target = target[keys[i]];
-            target[keys[keys.length - 1]] = value;
-            return newInfo;
-        });
-    };
-    const addDateScheme = () => setTempRoyaltyInfo(prev => [...prev, getInitialDateScheme()]);
-    const removeDateScheme = (idx: number) => setTempRoyaltyInfo(prev => prev.filter((_, i) => i !== idx));
-
-    // --- dynamic royalty helpers ---
-    const addVolumeRule = (schemeIndex: number) => {
-        setTempRoyaltyInfo(prev => {
-            const newInfo = JSON.parse(JSON.stringify(prev));
-            newInfo[schemeIndex].volumeRules.push(getInitialVolumeRule());
-            return newInfo;
-        });
-    };
-
-    const removeVolumeRule = (schemeIndex: number, ruleIndex: number) => {
-        setTempRoyaltyInfo(prev => {
-            const newInfo = JSON.parse(JSON.stringify(prev));
-            newInfo[schemeIndex].volumeRules = newInfo[schemeIndex].volumeRules.filter((_: any, i: number) => i !== ruleIndex);
-            return newInfo;
-        });
-    };
-
-    const addRoyaltySplit = (schemeIndex: number, ruleIndex: number) => {
-        setTempRoyaltyInfo(prev => {
-            const newInfo = JSON.parse(JSON.stringify(prev));
-            newInfo[schemeIndex].volumeRules[ruleIndex].royaltySplits.push(getInitialRoyaltySplit());
-            return newInfo;
-        });
-    };
-
-    const removeRoyaltySplit = (schemeIndex: number, ruleIndex: number, splitIndex: number) => {
-        setTempRoyaltyInfo(prev => {
-            const newInfo = JSON.parse(JSON.stringify(prev));
-            newInfo[schemeIndex].volumeRules[ruleIndex].royaltySplits = newInfo[schemeIndex].volumeRules[ruleIndex].royaltySplits.filter((_: any, i: number) => i !== splitIndex);
-            return newInfo;
-        });
-    };
-
-    const renderRoyaltyVolumeInputsForModal = (basePath: string, volumeInfo: VolumeIdentifier) => {
-        const handleFormatChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-            handleTempRoyaltyChange(`${basePath}.format`, e.target.value);
-        };
-
-        const handleValueChange = (field: keyof VolumeIdentifier, val: string) => {
-            handleTempRoyaltyChange(`${basePath}.${field}`, val);
-        };
-
-        return (
-            <div className="space-y-2">
-                <select
-                    value={volumeInfo.format}
-                    onChange={handleFormatChange}
-                    className="w-full p-2 border border-gray-300 rounded-md text-sm mb-2"
-                >
-                    <option value="volume_issue">卷/期</option>
-                    <option value="year_month">年/月</option>
-                    <option value="text">文字描述</option>
-                </select>
-
-                {volumeInfo.format === 'volume_issue' && (
-                    <div className="flex gap-2">
-                        <input type="text" placeholder="卷" value={volumeInfo.volume} onChange={e => handleValueChange('volume', e.target.value)} className="w-1/2 p-2 border border-gray-300 rounded-md text-sm" />
-                        <input type="text" placeholder="期" value={volumeInfo.issue} onChange={e => handleValueChange('issue', e.target.value)} className="w-1/2 p-2 border border-gray-300 rounded-md text-sm" />
-                    </div>
-                )}
-                {volumeInfo.format === 'year_month' && (
-                    <div className="flex gap-2">
-                        <input type="text" placeholder="年" value={volumeInfo.year} onChange={e => handleValueChange('year', e.target.value)} className="w-1/2 p-2 border border-gray-300 rounded-md text-sm" />
-                        <input type="text" placeholder="月" value={volumeInfo.month} onChange={e => handleValueChange('month', e.target.value)} className="w-1/2 p-2 border border-gray-300 rounded-md text-sm" />
-                    </div>
-                )}
-                {volumeInfo.format === 'text' && (
-                    <input type="text" placeholder="描述" value={volumeInfo.description} onChange={e => handleValueChange('description', e.target.value)} className="w-full p-2 border border-gray-300 rounded-md text-sm" />
-                )}
-            </div>
-        );
+    const saveRoyaltyChanges = (data: DateScheme[]) => {
+        setFormData(prev => ({ ...prev, royaltyInfo: data }));
     };
 
     const syncBeneficiariesToRemittance = () => {
+        if (formData.contractType !== 'journal_proceedings') return;
         const allBeneficiaries = new Set<string>();
         formData.royaltyInfo.forEach(scheme => scheme.volumeRules.forEach(rule => rule.royaltySplits.forEach(split => {
             if (split.beneficiary.trim()) allBeneficiaries.add(split.beneficiary.trim());
         })));
 
         setFormData(prev => {
+            if (prev.contractType !== 'journal_proceedings') return prev;
             const newRemittanceInfo = [...prev.remittanceInfo];
             const existing = new Set(newRemittanceInfo.map(i => i.beneficiary));
             allBeneficiaries.forEach(b => { if (!existing.has(b)) newRemittanceInfo.push(getInitialRemittanceInfoItem(b)); });
@@ -390,17 +340,90 @@ const AcademicContract: React.FC = () => {
     };
 
     const handleRemoveRemittanceItem = (id: string) => {
-        setFormData(prev => ({
-            ...prev,
-            remittanceInfo: prev.remittanceInfo.filter(item => item.id !== id)
-        }));
+        setFormData(prev => {
+            if (prev.contractType !== 'journal_proceedings') return prev;
+            return {
+                ...prev,
+                remittanceInfo: prev.remittanceInfo.filter(item => item.id !== id)
+            };
+        });
         showMessage('匯款資料已移除。');
+    };
+
+    // 個人授權權利金 Modal 操作
+    const openPaRoyaltyModal = () => setIsPaRoyaltyModalOpen(true);
+    const closePaRoyaltyModal = () => setIsPaRoyaltyModalOpen(false);
+    const savePaRoyaltyChanges = (data: PersonalAuthRoyaltyScheme[]) => {
+        setFormData(prev => ({ ...prev, personalAuthRoyaltyInfo: data }));
+    };
+
+    // 作者管理
+    const handleAddAuthor = () => {
+        setFormData(prev => {
+            const pa = prev as any;
+            if (!pa.personalAuthInfo) return prev;
+            const newAuthors = [...(pa.personalAuthInfo.authors || []), getInitialAuthor()];
+            return {
+                ...prev,
+                personalAuthInfo: {
+                    ...pa.personalAuthInfo,
+                    authors: newAuthors
+                }
+            };
+        });
+    };
+
+    const handleRemoveAuthor = (id: string) => {
+        setFormData(prev => {
+            const pa = prev as any;
+            if (!pa.personalAuthInfo) return prev;
+            const newAuthors = pa.personalAuthInfo.authors.filter((a: any) => a.id !== id);
+            // 確保至少有一個作者
+            if (newAuthors.length === 0) newAuthors.push(getInitialAuthor());
+
+            // 更新彙總姓名
+            const authorName = newAuthors.map((a: any) => a.name).filter(Boolean).join(', ');
+
+            return {
+                ...prev,
+                personalAuthInfo: {
+                    ...pa.personalAuthInfo,
+                    authors: newAuthors,
+                    authorName
+                }
+            };
+        });
+    };
+
+    const handleAuthorFieldChange = (authorId: string, field: string, value: string) => {
+        setFormData(prev => {
+            const pa = prev as any;
+            if (!pa.personalAuthInfo) return prev;
+            const newAuthors = pa.personalAuthInfo.authors.map((a: any) =>
+                a.id === authorId ? { ...a, [field]: value } : a
+            );
+
+            // 更新彙總姓名 (供搜尋與快速顯示)
+            let authorName = pa.personalAuthInfo.authorName;
+            if (field === 'name') {
+                authorName = newAuthors.map((a: any) => a.name).filter(Boolean).join(', ');
+            }
+
+            return {
+                ...prev,
+                personalAuthInfo: {
+                    ...pa.personalAuthInfo,
+                    authors: newAuthors,
+                    authorName
+                }
+            };
+        });
     };
 
     // --- JSX Render ---
     return (
         <div className="relative">
-            <FloatingTOC onJump={handleTocJump} sections={tocSections} />
+            <FloatingTOC onJump={handleTocJump} sections={visibleTocSections} />
 
             <div ref={mainContentRef} className="max-w-7xl mx-auto">
                 {/* Header & Import Section */}
@@ -435,50 +458,38 @@ const AcademicContract: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8 pb-20">
-                    {tocSections.map(section => {
-                        const dataKey = section.id.replace(/-(\w)/g, (_, c) => c.toUpperCase()) as keyof ContractData;
+                    {visibleTocSections.map(section => {
+                        const dataKey = section.id.startsWith('pa-') ? 'personalAuthInfo' : section.id.replace(/-(\w)/g, (_, c) => c.toUpperCase()) as keyof ContractData;
 
                         // 特殊區塊渲染
-                        if (section.id === 'royalty-info') {
+                        if (section.id === 'royalty-info' && formData.contractType === 'journal_proceedings') {
                             return (
                                 <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
-                                    <Button onClick={openRoyaltyModal} variant="ghost" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">編輯權利金規則</Button>
+                                    <Button type="button" onClick={openRoyaltyModal} variant="ghost" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">編輯權利金規則</Button>
+                                    {/* Royalty summary */}
+                                    {formData.royaltyInfo.length > 0 && formData.royaltyInfo.some(s => s.startDate || s.endDate) && (
+                                        <div className="mt-3 text-sm text-gray-500">
+                                            已設定 {formData.royaltyInfo.length} 個日期方案，
+                                            共 {formData.royaltyInfo.reduce((sum, s) => sum + s.volumeRules.length, 0)} 組卷期規則
+                                        </div>
+                                    )}
                                 </div>
                             );
                         }
-                        if (section.id === 'remittance-info') {
+                        if (section.id === 'remittance-info' && formData.contractType === 'journal_proceedings') {
                             return (
                                 <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
-                                    <Button onClick={syncBeneficiariesToRemittance} className="mb-4"><RefreshCw size={16} className="mr-2" /> 同步分潤主體</Button>
-                                    <div className="space-y-4">
-                                        {formData.remittanceInfo.map((item) => (
-                                            <div key={item.id} className="p-4 border rounded bg-gray-50">
-                                                <div className="flex justify-between mb-2">
-                                                    <div className="font-bold text-indigo-700">{item.beneficiary}</div>
-                                                    <Button variant="ghost" size="sm" onClick={() => handleRemoveRemittanceItem(item.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50"><Trash2 size={16} /></Button>
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                    {fieldConfig['remittance-info'].map((field) => {
-                                                        const path = `remittanceInfo.${formData.remittanceInfo.findIndex(f => f.id === item.id)}.${field.id}`;
-                                                        const value = getFieldValue(formData, path);
-                                                        return (
-                                                            <div key={field.id as string} className={field.fullWidth ? 'lg:col-span-3' : ''}>
-                                                                <FormField
-                                                                    field={field}
-                                                                    path={path}
-                                                                    value={value}
-                                                                    onChange={handleDynamicFormChange}
-                                                                    isRequired={isFieldRequired(path)}
-                                                                />
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <RemittanceSection
+                                        remittanceInfo={formData.remittanceInfo}
+                                        fieldConfig={fieldConfig['remittance-info']}
+                                        onSync={syncBeneficiariesToRemittance}
+                                        onRemove={handleRemoveRemittanceItem}
+                                        onFieldChange={handleDynamicFormChange}
+                                        getFieldValue={getFieldValue}
+                                        formData={formData}
+                                    />
                                 </div>
                             );
                         }
@@ -490,6 +501,61 @@ const AcademicContract: React.FC = () => {
                                         <Button variant="secondary" onClick={() => fileInputRef.current?.click()}><Upload size={16} className="mr-2" /> 選擇檔案</Button>
                                         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                                         <span className="text-sm text-gray-600">{getFileName(formData.scanFile)}</span>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        if (section.id === 'pa-royalty-info' && isPersonalAuth) {
+                            return (
+                                <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
+                                    <Button type="button" onClick={openPaRoyaltyModal} variant="ghost" className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200">編輯權利金規則（個人授權）</Button>
+                                    {(formData as any).personalAuthRoyaltyInfo && (formData as any).personalAuthRoyaltyInfo.length > 0 && (formData as any).personalAuthRoyaltyInfo.some((s: any) => s.startDate || s.endDate) && (
+                                        <div className="mt-3 text-sm text-gray-500">
+                                            已設定 {(formData as any).personalAuthRoyaltyInfo.length} 個日期方案，
+                                            共 {(formData as any).personalAuthRoyaltyInfo.reduce((sum: any, s: any) => sum + s.royaltySplits.length, 0)} 筆分潤明細
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
+                        if (section.id === 'pa-other-info' && isPersonalAuth) {
+                            const paBeneficiaries = Array.from(new Set(
+                                ((formData as any).personalAuthRoyaltyInfo || [])
+                                    .flatMap((scheme: any) => scheme.royaltySplits.map((split: any) => split.beneficiary))
+                                    .filter(Boolean)
+                            )) as string[];
+
+                            return (
+                                <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
+                                    <div className="space-y-6">
+                                        <AuthorListSection
+                                            authors={(formData as any).personalAuthInfo?.authors || []}
+                                            beneficiaries={paBeneficiaries}
+                                            onAdd={handleAddAuthor}
+                                            onRemove={handleRemoveAuthor}
+                                            onFieldChange={handleAuthorFieldChange}
+                                        />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t border-gray-100">
+                                            {fieldConfig['pa-other-info'].filter(f => f.id !== 'authors').map(field => {
+                                                const path = `personalAuthInfo.${field.id}`;
+                                                const value = getFieldValue(formData, path);
+                                                return (
+                                                    <div key={field.id as string} className={field.fullWidth ? 'lg:col-span-3' : ''}>
+                                                        <FormField
+                                                            field={field}
+                                                            path={path}
+                                                            value={value}
+                                                            onChange={handleDynamicFormChange}
+                                                            isRequired={isFieldRequired(path)}
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -519,7 +585,12 @@ const AcademicContract: React.FC = () => {
                                                     field={field}
                                                     path={path}
                                                     value={value}
-                                                    onChange={handleDynamicFormChange}
+                                                    onChange={(p, v) => {
+                                                        handleDynamicFormChange(p, v);
+                                                        if (section.id === 'pa-registration-info' && field.id === 'type') {
+                                                            handleDynamicFormChange('contractTarget.type', v);
+                                                        }
+                                                    }}
                                                     isRequired={isFieldRequired(path)}
                                                 />
                                             </div>
@@ -538,101 +609,21 @@ const AcademicContract: React.FC = () => {
             </div>
 
             {/* Royalty Modal */}
-            {/* Royalty Modal */}
-            <Modal
+            <RoyaltyModal
                 isOpen={isRoyaltyModalOpen}
                 onClose={closeRoyaltyModal}
-                title="編輯權利金比例"
-                size="xl"
-                footer={
-                    <div className="flex justify-end gap-3 w-full">
-                        <Button variant="secondary" onClick={closeRoyaltyModal}>取消</Button>
-                        <Button onClick={saveRoyaltyChanges}>儲存權利金</Button>
-                    </div>
-                }
-            >
-                <div className="space-y-6">
-                    {/* Datalist for Beneficiaries */}
-                    <datalist id="beneficiary-list">
-                        {/* Req 1: Correction - Link to contractParty */}
-                        {(formData.basicInfo.contractParty || []).map(rep => (
-                            <option key={rep} value={rep} />
-                        ))}
-                    </datalist>
+                royaltyInfo={formData.contractType === 'journal_proceedings' ? formData.royaltyInfo : []}
+                onSave={saveRoyaltyChanges}
+                contractParties={formData.contractType === 'journal_proceedings' ? (formData.basicInfo.contractParty || []) : []}
+            />
 
-                    {(tempRoyaltyInfo || []).map((scheme, sIndex) => (
-                        <div key={scheme.id} className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/50">
-                            <div className="flex justify-between items-center">
-                                <h4 className="font-semibold text-indigo-700">日期方案 #{sIndex + 1}</h4>
-                                {(tempRoyaltyInfo || []).length > 1 &&
-                                    <button onClick={() => removeDateScheme(sIndex)} className="text-red-500 hover:text-red-700 text-sm">移除此方案</button>
-                                }
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><label className="block text-sm font-medium text-gray-600 mb-1">起始日期</label><input type="date" value={scheme.startDate} onChange={e => handleTempRoyaltyChange(`${sIndex}.startDate`, e.target.value)} className="w-full p-2 border border-gray-300 rounded-md" /></div>
-                                <div><label className="block text-sm font-medium text-gray-600 mb-1">結束日期</label><input type="date" value={scheme.endDate} onChange={e => handleTempRoyaltyChange(`${sIndex}.endDate`, e.target.value)} className="w-full p-2 border border-gray-300 rounded-md" /></div>
-                            </div>
-                            {scheme.volumeRules.map((rule, rIndex) => (
-                                <div key={rule.id} className="border-t pt-4 mt-4 space-y-3">
-                                    <div className="flex justify-between items-center"><h5 className="font-semibold text-gray-600">卷期規則 #{rIndex + 1}</h5>{scheme.volumeRules.length > 1 && <button onClick={() => removeVolumeRule(sIndex, rIndex)} className="text-red-500 hover:text-red-700 text-xs">移除此規則</button>}</div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div><label className="block text-sm font-medium text-gray-600 mb-1">起始卷期</label>{renderRoyaltyVolumeInputsForModal(`${sIndex}.volumeRules.${rIndex}.startVolumeInfo`, rule.startVolumeInfo)}</div>
-                                        <div><label className="block text-sm font-medium text-gray-600 mb-1">結束卷期</label>{renderRoyaltyVolumeInputsForModal(`${sIndex}.volumeRules.${rIndex}.endVolumeInfo`, rule.endVolumeInfo)}</div>
-                                    </div>
-
-                                    {/* Req 2: Dynamic Royalty Splits */}
-                                    <div className="space-y-3">
-                                        <label className="block text-sm font-medium text-gray-600">分潤明細</label>
-                                        {rule.royaltySplits.map((split, splitIndex) => (
-                                            <div key={split.id} className="flex items-center gap-3">
-                                                <div className="flex-1">
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">分潤主體</label>
-                                                    <input
-                                                        type="text"
-                                                        list="beneficiary-list"
-                                                        value={split.beneficiary}
-                                                        onChange={e => handleTempRoyaltyChange(`${sIndex}.volumeRules.${rIndex}.royaltySplits.${splitIndex}.beneficiary`, e.target.value)}
-                                                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                                                        placeholder="選擇或輸入主體"
-                                                    />
-                                                </div>
-                                                <div className="w-32">
-                                                    <label className="block text-xs font-medium text-gray-500 mb-1">分潤比例 (%)</label>
-                                                    <div className="relative">
-                                                        <input
-                                                            type="text"
-                                                            value={split.percentage}
-                                                            onChange={e => handleTempRoyaltyChange(`${sIndex}.volumeRules.${rIndex}.royaltySplits.${splitIndex}.percentage`, e.target.value)}
-                                                            className="w-full p-2 border border-gray-300 rounded-md pr-7 text-sm"
-                                                        />
-                                                        <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-500 pointer-events-none">%</span>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeRoyaltySplit(sIndex, rIndex, splitIndex)}
-                                                    className="text-red-500 hover:text-red-700 p-1 self-end mb-1.5"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                        <button
-                                            type="button"
-                                            onClick={() => addRoyaltySplit(sIndex, rIndex)}
-                                            className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1 mt-2"
-                                        >
-                                            <Plus size={16} />新增分潤明細
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                            <button onClick={() => addVolumeRule(sIndex)} className="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1 mt-2"><Plus size={16} />新增卷期規則</button>
-                        </div>
-                    ))}
-                    <button onClick={addDateScheme} className="w-full py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-semibold">新增日期方案</button>
-                </div>
-            </Modal>
+            {/* Personal Auth Royalty Modal */}
+            <PersonalAuthRoyaltyModal
+                isOpen={isPaRoyaltyModalOpen}
+                onClose={closePaRoyaltyModal}
+                royaltyInfo={isPersonalAuth ? ((formData as any).personalAuthRoyaltyInfo || []) : []}
+                onSave={savePaRoyaltyChanges}
+            />
 
             {message.show && (
                 <div className={`fixed bottom-4 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg text-white shadow-lg z-[100] ${message.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>

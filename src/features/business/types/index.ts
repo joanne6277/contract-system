@@ -1,5 +1,4 @@
 // 業務部合約相關型別定義
-import type React from 'react';
 
 export interface BusinessContract {
     id?: string;
@@ -16,7 +15,7 @@ export interface BusinessContract {
         contractStartDate: string;
         contractEndDate: string;
         attribute: string;
-        productName: string; // 採購產品項目
+        productName: string[]; // 採購產品項目
         amount: string;
         remarks: string;
     };

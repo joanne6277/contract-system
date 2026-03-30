@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import { Upload, Save } from 'lucide-react';
 import { FloatingTOC, TagInput } from '@/components/common';
 import { Button } from '@/components/ui/Button';
@@ -236,8 +236,8 @@ const BusinessContract: React.FC = () => {
                                 <div key={section.id} id={section.id} className="border border-gray-200 rounded-lg p-6 bg-white shadow-sm">
                                     <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
                                     <textarea
-                                        value={formData.remarks}
-                                        onChange={(e) => handleDynamicFormChange('remarks', e.target.value)}
+                                        value={formData.purchaseContent.remarks}
+                                        onChange={(e) => handleDynamicFormChange('purchaseContent.remarks', e.target.value)}
                                         rows={4}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                                         placeholder="請輸入備註資訊..."

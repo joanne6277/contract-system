@@ -1,4 +1,4 @@
-export type Department = '學術發展部' | '圖書服務部' | '所有部門';
+export type Department = '學術發展部' | '圖書服務部' | '業務部' | '學術出版部' | '所有部門';
 
 export interface PermissionSet {
     adminOnly: boolean;
@@ -6,7 +6,7 @@ export interface PermissionSet {
     searchExport: boolean;
     downloadTemplate: boolean;
     maintainTemplate: boolean;
-    maintainParams: '學術發展部' | '圖書服務部' | '不開放';
+    maintainParams: '學術發展部' | '圖書服務部' | '業務部' | '學術出版部' | '不開放';
     landingPage: string;
 }
 

@@ -27,8 +27,13 @@ const Login: React.FC = () => {
 
         if (user) {
             // Department-based redirection
-            if (user.permissions?.landingPage === '圖書服務部' || user.department === '圖書服務部') {
+            const landingPage = user.permissions?.landingPage || user.department;
+            if (landingPage === '圖書服務部') {
                 navigate('/ddd/search');
+            } else if (landingPage === '業務部') {
+                navigate('/business/search');
+            } else if (landingPage === '學術出版部') {
+                navigate('/academic-publishing/search');
             } else {
                 navigate('/academic/search');
             }

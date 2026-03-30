@@ -7,8 +7,8 @@ import { BatchCart } from '@/features/batch/components/BatchCart';
 interface NavbarProps {
   currentUser: User | null;
   onLogout: () => void;
-  currentDepartment: '學術發展部' | '圖書服務部';
-  setCurrentDepartment: (dept: '學術發展部' | '圖書服務部') => void;
+  currentDepartment: '學術發展部' | '圖書服務部' | '業務部' | '學術出版部';
+  setCurrentDepartment: (dept: '學術發展部' | '圖書服務部' | '業務部' | '學術出版部') => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -47,14 +47,18 @@ const Navbar: React.FC<NavbarProps> = ({
       }`;
   };
 
-  const handleDepartmentChange = (dept: '學術發展部' | '圖書服務部') => {
+  const handleDepartmentChange = (dept: '學術發展部' | '圖書服務部' | '業務部' | '學術出版部') => {
     setCurrentDepartment(dept);
     setIsDeptMenuOpen(false);
     // Optional: Redirect to the search page of the new department to avoid 404s if on a specific contract page
     if (dept === '學術發展部') {
       navigate('/academic/search');
-    } else {
+    } else if (dept === '圖書服務部') {
       navigate('/ddd/search');
+    } else if (dept === '業務部') {
+      navigate('/business/search');
+    } else if (dept === '學術出版部') {
+      navigate('/academic-publishing/search');
     }
   };
 
@@ -107,6 +111,23 @@ const Navbar: React.FC<NavbarProps> = ({
                 )}
               </>
             )}
+
+            {currentDepartment === '業務部' && (
+              <>
+                <Link to="/business/search" className={getNavLinkClass('/business/search')}>
+                  搜尋合約
+                </Link>
+                <Link to="/business/contract/new" className={getNavLinkClass('/business/contract/new')}>
+                  新增合約
+                </Link>
+              </>
+            )}
+
+            {currentDepartment === '學術出版部' && (
+              <div className="px-3 py-2 text-sm font-medium text-gray-400 italic">
+                內容建置中...
+              </div>
+            )}
           </nav>
         </div>
 
@@ -124,21 +145,17 @@ const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {isDeptMenuOpen && (
-              <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-xl border border-gray-200 py-1 animate-in fade-in slide-in-from-top-2 z-50">
-                <button
-                  onClick={() => handleDepartmentChange('學術發展部')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center justify-between ${currentDepartment === '學術發展部' ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700'}`}
-                >
-                  <span>學術發展部</span>
-                  {currentDepartment === '學術發展部' && <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
-                </button>
-                <button
-                  onClick={() => handleDepartmentChange('圖書服務部')}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center justify-between ${currentDepartment === '圖書服務部' ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700'}`}
-                >
-                  <span>圖書服務部</span>
-                  {currentDepartment === '圖書服務部' && <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
-                </button>
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-gray-200 py-1 animate-in fade-in slide-in-from-top-2 z-50">
+                {(['學術發展部', '圖書服務部', '業務部', '學術出版部'] as const).map((dept) => (
+                  <button
+                    key={dept}
+                    onClick={() => handleDepartmentChange(dept)}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center justify-between ${currentDepartment === dept ? 'bg-indigo-50 text-indigo-700 font-medium' : 'text-gray-700'}`}
+                  >
+                    <span>{dept}</span>
+                    {currentDepartment === dept && <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>}
+                  </button>
+                ))}
               </div>
             )}
           </div>

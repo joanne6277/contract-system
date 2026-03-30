@@ -11,6 +11,7 @@ import AcademicContract from '@/pages/AcademicContract';
 import AcademicMaintainContract from '@/pages/AcademicMaintainContract';
 import AcademicSearchContract from '@/features/academic/search/AcademicSearchContract';
 import DDDSearchContract from '@/features/ddd/search/DDDSearchContract';
+import BusinessContract from '@/pages/BusinessContract';
 
 import {
   UserManagement,
@@ -28,7 +29,7 @@ const App: React.FC = () => {
   const { isLoggedIn, currentUser, logout } = useAuth();
 
   // UI 狀態
-  const [currentDepartment, setCurrentDepartment] = useState<'學術發展部' | '圖書服務部'>('學術發展部');
+  const [currentDepartment, setCurrentDepartment] = useState<'學術發展部' | '圖書服務部' | '業務部' | '學術出版部'>('學術發展部');
 
   const navigate = useNavigate();
 
@@ -73,6 +74,9 @@ const App: React.FC = () => {
             <Route path="/ddd/search" element={<DDDSearchContract />} />
             <Route path="/ddd/contract/new" element={<DDDContract />} />
             <Route path="/ddd/contract/:id" element={<DDDMaintainContract />} />
+
+            {/* Business (業務部) Routes */}
+            <Route path="/business/contract/new" element={<BusinessContract />} />
 
             {/* Settings Routes */}
             <Route path="/settings/users" element={<UserManagement />} />

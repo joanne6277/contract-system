@@ -1,3 +1,64 @@
+# 2026-03-30 業務部模組開發：新增「新增合約」功能
+
+## 摘要
+依據實作計畫，為業務部建立與學術發展部功能一致的「新增合約」模組。包含專屬的資料結構、目錄導航 (TOC) 實作、動態表單渲染與驗證機制。
+
+## 詳細變更內容
+
+### 1. 業務部 Feature 模組建立
+- [新增] `src/features/business/types/index.ts`
+  - 定義 `BusinessContractData` 型別，涵蓋造冊、基本、產品及匯款資訊。
+- [新增] `src/features/business/constants/`
+  - `tocSections.ts`: 定義業務部合約的 6 個章節（造冊、基本、產品、匯款、掃描檔、備註）。
+  - `fieldConfig.ts`: 定義各章節詳細欄位配置，包含管理編號、業務員、客戶名稱、產品金額等。
+  - `contractFields.ts`: 實作欄位 key 與資料路徑的映射。
+  - `validationRules.ts`: 設定管理編號、業務員、客戶名稱及產品名稱為必填項。
+- [新增] `src/features/business/index.ts`: 模組出口。
+
+### 2. 頁面實作與路由
+- [新增] `src/pages/BusinessContract.tsx`
+  - 參考 `AcademicContract.tsx` 實作。
+  - 使用 `useContractForm` 處理表單狀態，支援 TOC 跳轉與動態驗證。
+  - 整合 `ValidationWarningPanel` 元件顯示必填錯誤。
+- [修改] `src/App.tsx`
+  - 註冊 `/business/contract/new` 路由。
+- [修改] `src/components/layout/Navbar.tsx`
+  - 更新業務部導航選單，新增「新增合約」連結。
+
+---
+
+# 2026-03-30 系統部門擴充：新增「業務部」及「學術出版部」
+
+## 摘要
+因應組織調整，於合約管理系統中新增「業務部」與「學術出版部」兩個部門。本次變更涵蓋了型別定義、UI 選擇器、導航邏輯、權限管理及模擬資料的全面更新。
+
+## 詳細變更內容
+
+### 1. 核心型別與全域狀態更新
+- [修改] `src/features/auth/types/index.ts`
+  - 更新 `Department` 聯集型別，加入 `'業務部'` 與 `'學術出版部'`。
+  - 更新 `PermissionSet.maintainParams` 權限型別。
+- [修改] `src/App.tsx`
+  - 更新 `currentDepartment` 狀態的型別定義，確保支援新部門。
+
+### 2. UI 組件更新
+- [修改] `src/components/layout/Navbar.tsx`
+  - 更新 `NavbarProps` 介面。
+  - 擴充 `handleDepartmentChange` 導航邏輯，為新部門預留跳轉路徑。
+  - 在部門切換選單中新增「業務部」與「學術出版部」選項。
+  - 針對新部門顯示「內容建置中...」的提示資訊。
+- [修改] `src/features/settings/components/UserManagement.tsx`
+  - 在使用者編輯/建立對話框的「所屬部門」、「參數設定權限」與「登入後首頁」下拉選單中加入新部門。
+  - 為新部門在使用者列表中的標籤（Badge）新增專屬配色（業務部：橘色；學術出版部：青色）。
+
+### 3. 登入與模擬資料
+- [修改] `src/pages/Login.tsx`
+  - 重構登入後的跳轉邏輯，依據使用者的首頁設定或所屬部門自動導航至對應模組。
+- [修改] `src/features/auth/data/mockUsers.ts`
+  - 新增「業務員A」（業務部）與「編輯B」（學術出版部）兩位測試帳號。
+
+---
+
 # 2026-03-23 學術發展部個人授權：支援多位作者資料輸入
 
 ## 摘要

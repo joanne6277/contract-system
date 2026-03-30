@@ -142,7 +142,12 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.employeeId}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.department === '學術發展部' ? 'bg-blue-100 text-blue-800' : user.department === '圖書服務部' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}`}>
+                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                        user.department === '學術發展部' ? 'bg-blue-100 text-blue-800' : 
+                                        user.department === '圖書服務部' ? 'bg-green-100 text-green-800' : 
+                                        user.department === '業務部' ? 'bg-orange-100 text-orange-800' :
+                                        user.department === '學術出版部' ? 'bg-teal-100 text-teal-800' :
+                                        'bg-purple-100 text-purple-800'}`}>
                                         {user.department}
                                     </span>
                                 </td>
@@ -175,7 +180,7 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
                             <div><label className="block text-sm font-medium text-gray-700 mb-1">姓名</label><input type="text" value={editingUser.name} onChange={e => setEditingUser({ ...editingUser, name: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
                             <div><label className="block text-sm font-medium text-gray-700 mb-1">員工編號 (登入帳號)</label><input type="text" value={editingUser.employeeId} onChange={e => setEditingUser({ ...editingUser, employeeId: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
                             <div><label className="block text-sm font-medium text-gray-700 mb-1">Email</label><input type="email" value={editingUser.email} onChange={e => setEditingUser({ ...editingUser, email: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg" /></div>
-                            <div><label className="block text-sm font-medium text-gray-700 mb-1">所屬部門</label><select value={editingUser.department} onChange={e => setEditingUser({ ...editingUser, department: e.target.value as Department })} className="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="學術發展部">學術發展部</option><option value="圖書服務部">圖書服務部</option><option value="所有部門">所有部門 (主管)</option></select></div>
+                            <div><label className="block text-sm font-medium text-gray-700 mb-1">所屬部門</label><select value={editingUser.department} onChange={e => setEditingUser({ ...editingUser, department: e.target.value as Department })} className="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="學術發展部">學術發展部</option><option value="圖書服務部">圖書服務部</option><option value="業務部">業務部</option><option value="學術出版部">學術出版部</option><option value="所有部門">所有部門 (主管)</option></select></div>
                         </div>
                         <div className="border-t border-gray-200 pt-6">
                             <h4 className="text-lg font-semibold text-gray-800 mb-4">系統權限設定</h4>
@@ -208,11 +213,13 @@ export const UserManagement: React.FC<UserManagementProps> = () => {
                                     <option value="不開放">不開放</option>
                                     <option value="學術發展部">僅限學術發展部參數</option>
                                     <option value="圖書服務部">僅限圖書服務部參數</option>
+                                    <option value="業務部">僅限業務部參數</option>
+                                    <option value="學術出版部">僅限學術出版部參數</option>
                                 </select>
                             </div>
                             <div className="mt-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">登入後首頁</label>
-                                <select value={editingUser.permissions.landingPage} onChange={e => setEditingUser({ ...editingUser, permissions: { ...editingUser.permissions, landingPage: e.target.value } })} className="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="學術發展部">學術發展部</option><option value="圖書服務部">圖書服務部</option></select>
+                                <select value={editingUser.permissions.landingPage} onChange={e => setEditingUser({ ...editingUser, permissions: { ...editingUser.permissions, landingPage: e.target.value } })} className="w-full px-4 py-2 border border-gray-300 rounded-lg"><option value="學術發展部">學術發展部</option><option value="圖書服務部">圖書服務部</option><option value="業務部">業務部</option><option value="學術出版部">學術出版部</option></select>
                             </div>
                         </div>
                         <div className="border-t border-gray-200 pt-6">

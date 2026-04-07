@@ -24,6 +24,7 @@ const getInitialFormData = (): BusinessContractData => ({
         purchasingYear: new Date().getFullYear().toString()
     },
     purchaseContent: {
+        isBuyout: '否',
         mode: '',
         contractStartDate: '',
         contractEndDate: '',
@@ -42,15 +43,18 @@ interface FormFieldProps {
     value: unknown;
     onChange: (path: string, value: any) => void;
     isRequired?: boolean;
+    disabled?: boolean;
 }
 
-const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isRequired }) => {
+const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isRequired, disabled }) => {
     const { id, label, type, options, placeholder } = field;
     const renderLabel = () => (
-        <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor={id} className={`block text-sm font-medium ${disabled ? 'text-gray-400' : 'text-gray-700'} mb-2`}>
             {label} {isRequired && <span className="text-red-500 ml-1">*</span>}
         </label>
     );
+
+    const inputClassName = `w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${disabled ? 'bg-gray-100 cursor-not-allowed text-gray-400' : ''}`;
 
     switch (type) {
         case 'text':
@@ -62,8 +66,9 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
                         type="text"
                         value={value as string || ''}
                         onChange={(e) => onChange(path, e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className={inputClassName}
                         placeholder={placeholder}
+                        disabled={disabled}
                     />
                 </div>
             );
@@ -76,7 +81,8 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
                         type="date"
                         value={value as string || ''}
                         onChange={(e) => onChange(path, e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className={inputClassName}
+                        disabled={disabled}
                     />
                 </div>
             );
@@ -86,7 +92,7 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
                     {renderLabel()}
                     <div className="flex items-center space-x-4 pt-2">
                         {options?.map((opt) => (
-                            <label key={opt} className="flex items-center cursor-pointer">
+                            <label key={opt} className={`flex items-center ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
                                 <input
                                     type="radio"
                                     name={id}
@@ -94,8 +100,9 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
                                     checked={value === opt}
                                     onChange={(e) => onChange(path, e.target.value)}
                                     className="h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                                    disabled={disabled}
                                 />
-                                <span className="ml-2 text-sm text-gray-700">{opt}</span>
+                                <span className={`ml-2 text-sm ${disabled ? 'text-gray-400' : 'text-gray-700'}`}>{opt}</span>
                             </label>
                         ))}
                     </div>
@@ -109,7 +116,8 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
                         id={id}
                         value={value as string || ''}
                         onChange={(e) => onChange(path, e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className={inputClassName}
+                        disabled={disabled}
                     >
                         <option value="">請選擇</option>
                         {options?.map((opt) => (
@@ -127,8 +135,9 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
                         value={value as string || ''}
                         onChange={(e) => onChange(path, e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        className={inputClassName}
                         placeholder={placeholder}
+                        disabled={disabled}
                     />
                 </div>
             );
@@ -137,6 +146,35 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
                 <div>
                     {renderLabel()}
                     <TagInput value={value as string[]} onChange={(tags) => onChange(path, tags)} placeholder={placeholder} />
+                </div>
+            );
+        case 'select-multiple':
+            // 模擬從參數讀取的產品項目
+            const productOptions = ['CEPS', 'CETD', 'SYMSKAN', 'ABC', 'PRO', 'AL', 'AE', 'CEPS生醫'];
+            const selectedValues = (value as string[]) || [];
+
+            return (
+                <div className="lg:col-span-3">
+                    {renderLabel()}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-5 border border-gray-200 rounded-xl bg-gray-50/50 shadow-sm">
+                        {productOptions.map((opt) => (
+                            <label key={opt} className={`flex items-center space-x-3 p-3 rounded-lg border border-transparent hover:border-indigo-200 hover:bg-white transition-all cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-sm'}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={selectedValues.includes(opt)}
+                                    disabled={disabled}
+                                    onChange={(e) => {
+                                        const newValues = e.target.checked
+                                            ? [...selectedValues, opt]
+                                            : selectedValues.filter((v) => v !== opt);
+                                        onChange(path, newValues);
+                                    }}
+                                    className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 transition-colors"
+                                />
+                                <span className="text-sm font-medium text-gray-700">{opt}</span>
+                            </label>
+                        ))}
+                    </div>
                 </div>
             );
         default:
@@ -254,8 +292,15 @@ const BusinessContract: React.FC = () => {
                                 <h3 className="text-lg font-semibold text-gray-800 mb-4">{section.label}</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {fields?.map(field => {
+                                        // 檢查顯示條件
+                                        if (field.condition && !field.condition(formData)) {
+                                            return null;
+                                        }
+
                                         const path = `${dataKey}.${field.id}`;
                                         const value = getFieldValue(formData, path);
+                                        const isDisabled = field.disabledCondition ? field.disabledCondition(formData) : false;
+
                                         return (
                                             <div key={field.id} className={field.fullWidth ? 'lg:col-span-3' : ''}>
                                                 <FormField
@@ -264,6 +309,7 @@ const BusinessContract: React.FC = () => {
                                                     value={value}
                                                     onChange={handleDynamicFormChange}
                                                     isRequired={isFieldRequired(path)}
+                                                    disabled={isDisabled}
                                                 />
                                             </div>
                                         );

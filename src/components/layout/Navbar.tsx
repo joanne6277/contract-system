@@ -85,7 +85,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 <Link to="/settings/templates" className={getNavLinkClass('/settings/templates')}>
                   範本管理
                 </Link>
-                {currentUser?.permissions.maintainParams === '學術發展部' && (
+                {(currentUser?.permissions.maintainParams === '學術發展部' || currentUser?.permissions.adminOnly) && (
                   <Link to="/xuefa-params" className={getNavLinkClass('/xuefa-params')}>
                     參數設定
                   </Link>
@@ -120,6 +120,11 @@ const Navbar: React.FC<NavbarProps> = ({
                 <Link to="/business/contract/new" className={getNavLinkClass('/business/contract/new')}>
                   新增合約
                 </Link>
+                {(currentUser?.permissions.maintainParams === '業務部' || currentUser?.permissions.adminOnly) && (
+                  <Link to="/business-params" className={getNavLinkClass('/business-params')}>
+                    參數設定
+                  </Link>
+                )}
               </>
             )}
 

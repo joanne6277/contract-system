@@ -14,6 +14,7 @@ export const fieldKeyToNameMap: { [key: string]: string } = {
     salesperson: '業務',
     clientName: '採購單位',
     purchasingYear: '採購年份',
+    isBuyout: '買斷',
     mode: '模式',
     contractStartDate: '履約起始日',
     contractEndDate: '履約結束日',

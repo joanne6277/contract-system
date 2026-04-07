@@ -11,6 +11,7 @@ import AcademicContract from '@/pages/AcademicContract';
 import AcademicMaintainContract from '@/pages/AcademicMaintainContract';
 import AcademicSearchContract from '@/features/academic/search/AcademicSearchContract';
 import DDDSearchContract from '@/features/ddd/search/DDDSearchContract';
+import { BusinessSearchContract, BusinessSearchResults, BusinessContractDetail } from '@/features/business';
 import BusinessContract from '@/pages/BusinessContract';
 
 import {
@@ -22,6 +23,7 @@ import {
 import { DDDTemplateManagement } from '@/features/ddd/pages/DDDTemplateManagement';
 import { DDDParameterSettings } from '@/features/ddd/pages/DDDParameterSettings';
 import { BatchProvider } from '@/features/batch/context/BatchContext';
+import BusinessParameterSettings from '@/features/business/pages/BusinessParameterSettings';
 
 
 const App: React.FC = () => {
@@ -76,7 +78,12 @@ const App: React.FC = () => {
             <Route path="/ddd/contract/:id" element={<DDDMaintainContract />} />
 
             {/* Business (業務部) Routes */}
+            <Route path="/business/search" element={<BusinessSearchContract />} />
+            <Route path="/business/search/results" element={<BusinessSearchResults />} />
             <Route path="/business/contract/new" element={<BusinessContract />} />
+            <Route path="/business/contract/detail/:id" element={<BusinessContractDetail />} />
+            <Route path="/business/contract/:id" element={<BusinessContract />} />
+            <Route path="/business/maintain/:id" element={<BusinessContract />} />
 
             {/* Settings Routes */}
             <Route path="/settings/users" element={<UserManagement />} />
@@ -87,6 +94,7 @@ const App: React.FC = () => {
             <Route path="/ddd-params" element={<DDDParameterSettings />} />
 
             <Route path="/xuefa-params" element={<ParameterSettings />} />
+            <Route path="/business-params" element={<BusinessParameterSettings />} />
             <Route path="/my-notification-settings" element={<PersonalNotificationSettings />} />
 
             <Route path="*" element={<div className="p-8 text-center text-gray-500">頁面建置中...</div>} />

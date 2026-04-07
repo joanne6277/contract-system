@@ -15,10 +15,10 @@ export const ParameterSettings: React.FC = () => {
 
     // 權限檢查
     const canMaintainParams = currentUser?.permissions.maintainParams;
-    // const isTufuAdmin = canMaintainParams === '圖書服務部'; // Removed
-    const isXuefaAdmin = canMaintainParams === '學術發展部';
+    const isAdmin = currentUser?.permissions.adminOnly;
+    const isXuefaAdmin = canMaintainParams === '學術發展部' || isAdmin;
 
-    if (!canMaintainParams || canMaintainParams === '不開放') {
+    if (!canMaintainParams || (canMaintainParams === '不開放' && !isAdmin)) {
         return (
             <div className="p-8 text-center text-gray-500 bg-white rounded-xl shadow-sm">
                 您沒有權限存取此頁面。

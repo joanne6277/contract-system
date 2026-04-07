@@ -11,6 +11,7 @@ export interface BusinessContract {
         purchasingYear: string;
     };
     purchaseContent: {
+        isBuyout: string; // '是' | '否'
         mode: string;
         contractStartDate: string;
         contractEndDate: string;
@@ -28,10 +29,15 @@ export type BusinessContractData = BusinessContract;
 export interface BusinessFormFieldConfig {
     id: string;
     label: string;
-    type: 'text' | 'date' | 'radio' | 'tags' | 'select' | 'textarea';
+    type: 'text' | 'date' | 'radio' | 'tags' | 'select' | 'textarea' | 'select-multiple';
     options?: string[];
     fullWidth?: boolean;
     placeholder?: string;
     fields?: BusinessFormFieldConfig[];
     condition?: (formData: BusinessContractData) => boolean;
+    disabledCondition?: (formData: BusinessContractData) => boolean;
+}
+
+export interface BusinessParameters {
+    productNames: string[];
 }

@@ -1,3 +1,36 @@
+# 2026-03-31 業務部模組開發：新增「搜尋合約」功能
+
+## 摘要
+為業務部建立搜尋合約模組，功能與學術發展部一致。包含關鍵字搜尋（學校名稱）、合約有效日期範圍搜尋、回溯功能，以及可自定義顯示欄位的簡目清單頁面。
+
+## 詳細變更內容
+
+### 1. 模擬資料與常數配置
+- [新增] `src/data/mockBusinessContracts.ts`: 建立 4 筆業務部合約模擬資料，涵蓋單家/聯採模式及不同採購產品。
+- [修改] `src/data/index.ts`: 匯出 `mockBusinessContracts`。
+- [新增] `src/features/business/search/constants/index.ts`: 定義業務部搜尋結果的顯示列配置，區分預設顯示與可選顯示欄位。
+
+### 2. 搜尋模組實作
+- [新增] `src/features/business/search/BusinessSearchContract.tsx`
+  - 實作搜尋介面：文字搜尋（學校名稱）、日期範圍篩選、回溯至指定日期。
+  - 整合 `FilterDrawer` 進階篩選：支援業務、採購模式、屬性、採購項目篩選。
+  - 整合 `ColumnSelector` 欄位顯示切換功能。
+  - 實作排序功能與批次選取邏輯。
+  - 複用 `src/features/search/components/` 下的共用搜尋組件。
+
+### 3. 模組整合與路由
+- [修改] `src/features/business/index.ts`: 匯出 `BusinessSearchContract` 元件。
+- [修改] `src/App.tsx`
+  - 註冊 `/business/search` 路由。
+  - 更新 `/business/contract/:id` 及 `/business/maintain/:id` 路由，導向至 `BusinessContract` 頁面以利後續開發維護功能。
+
+## 測試結果
+- ✅ UI 呈現: 搜尋介面與結果列表符合規格，風格與學發部一致。
+- ✅ 搜尋邏輯: 關鍵字與日期篩選功能正常。
+- ✅ 欄位切換: 可動態增減顯示欄位並即時更新表格。
+
+---
+
 # 2026-03-30 業務部模組開發：新增「新增合約」功能
 
 ## 摘要

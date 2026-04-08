@@ -89,6 +89,12 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({ isOpen, onClose, activeFilt
                     <CollapsibleSection title="採購內容">
                         <div className="space-y-4 pt-2">
                             <FilterSelect 
+                                label="買斷" 
+                                value={activeFilters.isBuyout || ''} 
+                                options={['是', '否']} 
+                                onChange={(val) => handleFilterUpdate('isBuyout', val)} 
+                            />
+                            <FilterSelect 
                                 label="採購模式" 
                                 value={activeFilters.mode || ''} 
                                 options={['單家', '聯採']} 
@@ -202,6 +208,7 @@ const BusinessSearchResults: React.FC = () => {
         }
 
         if (activeFilters.salesperson) results = results.filter(c => c.basicInfo.salesperson.includes(activeFilters.salesperson));
+        if (activeFilters.isBuyout) results = results.filter(c => c.purchaseContent.isBuyout === activeFilters.isBuyout);
         if (activeFilters.mode) results = results.filter(c => c.purchaseContent.mode === activeFilters.mode);
         if (activeFilters.attribute) results = results.filter(c => c.purchaseContent.attribute.includes(activeFilters.attribute));
         if (activeFilters.productName) results = results.filter(c => c.purchaseContent.productName.some(p => p.includes(activeFilters.productName)));

@@ -6,8 +6,6 @@ import { mockBusinessContracts } from '@/data/mockBusinessContracts';
 import { Button } from '@/components/ui/Button';
 import { FloatingTOC } from '@/components/common';
 import { tocSections } from '../constants/tocSections';
-import { fieldKeyToNameMap } from '../constants/contractFields';
-import type { BusinessContract } from '../types';
 
 const BusinessContractDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -35,15 +33,6 @@ const BusinessContractDetail: React.FC = () => {
             const offsetPosition = window.pageYOffset + elementPosition - offset;
             window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
         }
-    };
-
-    const renderFieldValue = (sectionId: string, fieldId: string) => {
-        const dataKey = (sectionId === 'basic-info' ? 'basicInfo' : 'purchaseContent') as keyof BusinessContract;
-        const data = contract[dataKey as 'basicInfo' | 'purchaseContent'];
-        const value = (data as any)[fieldId];
-
-        if (Array.isArray(value)) return value.join(', ');
-        return value || '-';
     };
 
     return (
@@ -88,7 +77,7 @@ const BusinessContractDetail: React.FC = () => {
                             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
                         >
                             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                                <h3 className="text-lg font-bold text-gray-800">{section.title}</h3>
+                                <h3 className="text-lg font-bold text-gray-800">{section.label}</h3>
                             </div>
                             <div className="p-6">
                                 {section.id === 'scan-file' ? (

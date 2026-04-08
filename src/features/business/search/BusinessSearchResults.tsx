@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Search, Plus, FileText, Download, Filter, Columns, ChevronUp, ChevronDown, ArrowLeft, ArrowUpDown, X } from 'lucide-react';
+import { Filter, Columns, ChevronUp, ChevronDown, ArrowUpDown, X } from 'lucide-react';
 import { useBatch } from '../../batch/context/BatchContext';
+import type { BatchItem } from '../../batch/context/BatchContext';
 import { BatchSelectionCheckbox } from '../../batch/components/BatchSelectionCheckbox';
 import { mockBusinessContracts } from '@/data/mockBusinessContracts';
 import { Button } from '@/components/ui/Button';
@@ -127,7 +128,6 @@ const BusinessSearchResults: React.FC = () => {
     const dateMode = queryParams.get('dateMode') || 'effective';
     const startDate = queryParams.get('startDate') || '';
     const endDate = queryParams.get('endDate') || '';
-    const rollbackDate = queryParams.get('rollbackDate') || '';
 
     const [activeFilters, setActiveFilters] = useState<Record<string, any>>({});
     const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(columnConfig.defaultVisible));
@@ -149,16 +149,16 @@ const BusinessSearchResults: React.FC = () => {
     };
 
     // --- 拖曳相關邏輯 ---
-    const handleDragStart = (e: React.DragEvent, position: number) => {
+    const handleDragStart = (_e: React.DragEvent, position: number) => {
         dragItem.current = position;
     };
 
-    const handleDragEnter = (e: React.DragEvent, position: number) => {
+    const handleDragEnter = (_e: React.DragEvent, position: number) => {
         dragOverItem.current = position;
         setDragOverColId(displayedColumns[position]);
     };
 
-    const handleDrop = (e: React.DragEvent) => {
+    const handleDrop = (_e: React.DragEvent) => {
         if (dragItem.current === null || dragOverItem.current === null) return;
         const newDisplayedColumns = [...displayedColumns];
         const dragItemContent = newDisplayedColumns[dragItem.current];
@@ -221,13 +221,13 @@ const BusinessSearchResults: React.FC = () => {
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked;
-        const allItems = filteredContracts
+        const allItems: BatchItem[] = filteredContracts
             .filter(c => c.id !== undefined)
             .map(c => ({
                 id: c.id!,
                 label: c.basicInfo.clientName || 'Unknown Contract',
                 data: c,
-                type: 'business' as any
+                type: 'business'
             }));
 
         if (checked) {
@@ -330,8 +330,6 @@ const BusinessSearchResults: React.FC = () => {
                                             <BatchSelectionCheckbox
                                                 id={contract.id!}
                                                 label={contract.basicInfo.clientName || 'Unknown Contract'}
-                                                data={contract}
-                                                type="business"
                                             />
                                         </td>
                                         {columnsToRender.map(col => (

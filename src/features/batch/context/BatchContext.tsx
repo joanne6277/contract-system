@@ -3,14 +3,14 @@ import React, { createContext, useContext, useState, useCallback, type ReactNode
 export interface BatchItem {
     id: string;
     label: string;
-    type?: 'academic' | 'ddd';
+    type?: 'academic' | 'ddd' | 'business';
     data?: any;
 }
 
 interface BatchContextType {
     selectedItems: Map<string, BatchItem>; // Store Map<ID, Item>
     selectedIds: Set<string>; // Helper for quick lookup
-    toggleItem: (id: string, label?: string, data?: any, type?: 'academic' | 'ddd') => void;
+    toggleItem: (id: string, label?: string, data?: any, type?: 'academic' | 'ddd' | 'business') => void;
     selectMultiple: (items: BatchItem[]) => void;
     deselectMultiple: (ids: string[]) => void;
     clearSelection: () => void;
@@ -24,7 +24,7 @@ export const BatchProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     // Store as a Map to keep metadata (like label/name)
     const [selectedItemsMap, setSelectedItemsMap] = useState<Map<string, BatchItem>>(new Map());
 
-    const toggleItem = useCallback((id: string, label: string = id, data?: any, type?: 'academic' | 'ddd') => {
+    const toggleItem = useCallback((id: string, label: string = id, data?: any, type?: 'academic' | 'ddd' | 'business') => {
         setSelectedItemsMap(prev => {
             const newMap = new Map(prev);
             if (newMap.has(id)) {

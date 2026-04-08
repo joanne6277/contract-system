@@ -12,11 +12,12 @@ export const mockBusinessContracts: BusinessContract[] = [
             purchasingYear: '2024'
         },
         purchaseContent: {
+            isBuyout: '否',
             mode: '單家',
             contractStartDate: '2024-01-01',
             contractEndDate: '2024-12-31',
             attribute: '學校',
-            productName: ['電子書資料庫', '期刊系統'],
+            productName: ['AL', 'CEPS'],
             amount: '500,000',
             remarks: '年度續約'
         },
@@ -33,11 +34,12 @@ export const mockBusinessContracts: BusinessContract[] = [
             purchasingYear: '2024'
         },
         purchaseContent: {
+            isBuyout: '否',
             mode: '聯採',
             contractStartDate: '2024-02-01',
             contractEndDate: '2025-01-31',
             attribute: '公圖',
-            productName: ['數位內容服務'],
+            productName: ['ABC', 'CETD'],
             amount: '1,200,000',
             remarks: '三年專案第一年'
         },
@@ -54,11 +56,12 @@ export const mockBusinessContracts: BusinessContract[] = [
             purchasingYear: '2023'
         },
         purchaseContent: {
+            isBuyout: '否',
             mode: '單家',
             contractStartDate: '2023-06-01',
             contractEndDate: '2024-05-31',
             attribute: '醫院',
-            productName: ['醫學資料庫', '臨床指引'],
+            productName: ['PRO', 'SYMSKAN'],
             amount: '850,000',
             remarks: ''
         },
@@ -75,14 +78,37 @@ export const mockBusinessContracts: BusinessContract[] = [
             purchasingYear: '2024'
         },
         purchaseContent: {
+            isBuyout: '否',
             mode: '單家',
             contractStartDate: '2024-03-15',
             contractEndDate: '2025-03-14',
             attribute: '學校',
-            productName: ['全文資料庫'],
+            productName: ['CEPS'],
             amount: '300,000',
             remarks: ''
         },
         createdAt: new Date('2024-03-15')
+    },
+    {
+        id: 'B005',
+        contractType: 'business_standard',
+        basicInfo: {
+            managementNo: 'BUS-2024-022',
+            contractNo: 'CON-2024-115',
+            salesperson: '李美華',
+            clientName: '國家圖書館',
+            purchasingYear: '2024'
+        },
+        purchaseContent: {
+            isBuyout: '是',
+            mode: '單家',
+            contractStartDate: '2024-05-01',
+            contractEndDate: '',
+            attribute: '公圖',
+            productName: ['AL'],
+            amount: '2,500,000',
+            remarks: '永久授權買斷專案'
+        },
+        createdAt: new Date('2024-05-01')
     }
 ];

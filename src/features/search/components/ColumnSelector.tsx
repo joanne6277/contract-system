@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Columns } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import type { ColumnGroup } from '../types';

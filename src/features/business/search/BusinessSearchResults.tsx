@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Filter, Columns, ChevronUp, ChevronDown, ArrowUpDown, X } from 'lucide-react';
+import { Filter, Columns, ChevronUp, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { useBatch } from '../../batch/context/BatchContext';
 import type { BatchItem } from '../../batch/context/BatchContext';
 import { BatchSelectionCheckbox } from '../../batch/components/BatchSelectionCheckbox';

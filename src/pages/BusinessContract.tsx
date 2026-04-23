@@ -9,7 +9,7 @@ import { mockBusinessContracts } from '@/data/mockBusinessContracts';
 import { tocSections, businessFieldConfig, businessValidationRules, fieldKeyToNameMap } from '@/features/business';
 
 // 引入型別
-import type { BusinessContractData, BusinessFormFieldConfig, MaintenanceRecord, ChangeDetail } from '@/features/business/types';
+import type { BusinessContractData, BusinessFormFieldConfig, MaintenanceRecord } from '@/features/business/types';
 // 引入自定義 Hook
 import { useContractForm } from '@/shared/hooks';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';

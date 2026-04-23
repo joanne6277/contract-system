@@ -52,6 +52,14 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({ isOpen, onClose, activeFilt
         onFilterChange({ ...activeFilters, [key]: value });
     };
 
+    const handleCheckboxChange = (key: string, option: string, checked: boolean) => {
+        const current = activeFilters[key] || [];
+        const next = checked 
+            ? [...current, option]
+            : current.filter((item: string) => item !== option);
+        handleFilterUpdate(key, next);
+    };
+
     const clearFilters = () => {
         onFilterChange({});
     };
@@ -67,47 +75,103 @@ const FilterDrawer: React.FC<FilterDrawerProps> = ({ isOpen, onClose, activeFilt
                 className={`fixed top-0 left-0 h-full bg-white/95 backdrop-blur-sm hover:bg-white transition-all duration-300 w-80 shadow-2xl z-50 flex flex-col ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
                 onClick={e => e.stopPropagation()}
             >
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white/50 backdrop-blur-sm">
-                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <Filter size={20} className="text-indigo-600" />
-                        進階篩選
-                    </h3>
-                    <Button variant="ghost" size="sm" onClick={onClose}><X size={20} /></Button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-6 space-y-2">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     <CollapsibleSection title="基本資料">
                         <div className="pt-2">
                             <FilterTextInput 
-                                label="業務" 
-                                value={activeFilters.salesperson || ''} 
-                                onChange={(val) => handleFilterUpdate('salesperson', val)} 
+                                label="採購年份" 
+                                value={activeFilters.purchasingYear || ''} 
+                                onChange={(val) => handleFilterUpdate('purchasingYear', val)} 
                             />
                         </div>
                     </CollapsibleSection>
 
                     <CollapsibleSection title="採購內容">
                         <div className="space-y-4 pt-2">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-600">採購金額</label>
+                                <select 
+                                    value={activeFilters.amountOperator || ''} 
+                                    onChange={e => handleFilterUpdate('amountOperator', e.target.value)}
+                                    className="w-full text-sm px-3 py-1.5 border border-gray-300 rounded-md"
+                                >
+                                    <option value="">全部</option>
+                                    <option value="gt">大於</option>
+                                    <option value="lt">小於</option>
+                                    <option value="between">介於</option>
+                                </select>
+                                <div className="flex gap-2 items-center">
+                                    <input 
+                                        type="number" 
+                                        value={activeFilters.amountMin || ''} 
+                                        onChange={e => handleFilterUpdate('amountMin', e.target.value)}
+                                        placeholder={activeFilters.amountOperator === 'between' ? '最小值' : '金額'}
+                                        className="w-full text-sm px-3 py-1.5 border border-gray-300 rounded-md"
+                                    />
+                                    {activeFilters.amountOperator === 'between' && (
+                                        <>
+                                            <span className="text-gray-400">-</span>
+                                            <input 
+                                                type="number" 
+                                                value={activeFilters.amountMax || ''} 
+                                                onChange={e => handleFilterUpdate('amountMax', e.target.value)}
+                                                placeholder="最大值"
+                                                className="w-full text-sm px-3 py-1.5 border border-gray-300 rounded-md"
+                                            />
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            {/* 買斷 - 改為勾選 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 mb-2">買斷</label>
+                                <div className="flex gap-4">
+                                    {['是', '否'].map(opt => (
+                                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={(activeFilters.isBuyout || []).includes(opt)}
+                                                onChange={e => handleCheckboxChange('isBuyout', opt, e.target.checked)}
+                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <span className="text-sm text-gray-700">{opt}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 採購模式 - 改為勾選 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-600 mb-2">採購模式</label>
+                                <div className="flex gap-4">
+                                    {['單家', '聯採'].map(opt => (
+                                        <label key={opt} className="flex items-center gap-2 cursor-pointer">
+                                            <input 
+                                                type="checkbox" 
+                                                checked={(activeFilters.mode || []).includes(opt)}
+                                                onChange={e => handleCheckboxChange('mode', opt, e.target.checked)}
+                                                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            />
+                                            <span className="text-sm text-gray-700">{opt}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* 屬性 - 改為下拉 */}
                             <FilterSelect 
-                                label="買斷" 
-                                value={activeFilters.isBuyout || ''} 
-                                options={['是', '否']} 
-                                onChange={(val) => handleFilterUpdate('isBuyout', val)} 
-                            />
-                            <FilterSelect 
-                                label="採購模式" 
-                                value={activeFilters.mode || ''} 
-                                options={['單家', '聯採']} 
-                                onChange={(val) => handleFilterUpdate('mode', val)} 
-                            />
-                            <FilterTextInput 
                                 label="屬性" 
                                 value={activeFilters.attribute || ''} 
+                                options={['機構', '醫院', '學校', '公圖']} 
                                 onChange={(val) => handleFilterUpdate('attribute', val)} 
                             />
-                            <FilterTextInput 
+
+                            {/* 採購項目 - 改為下拉 */}
+                            <FilterSelect 
                                 label="採購項目" 
                                 value={activeFilters.productName || ''} 
+                                options={['AL', 'CEPS', 'CETD', 'ABC', 'PRO', 'SYMSKAN']} 
                                 onChange={(val) => handleFilterUpdate('productName', val)} 
                             />
                         </div>
@@ -207,11 +271,29 @@ const BusinessSearchResults: React.FC = () => {
             });
         }
 
-        if (activeFilters.salesperson) results = results.filter(c => c.basicInfo.salesperson.includes(activeFilters.salesperson));
-        if (activeFilters.isBuyout) results = results.filter(c => c.purchaseContent.isBuyout === activeFilters.isBuyout);
-        if (activeFilters.mode) results = results.filter(c => c.purchaseContent.mode === activeFilters.mode);
-        if (activeFilters.attribute) results = results.filter(c => c.purchaseContent.attribute.includes(activeFilters.attribute));
-        if (activeFilters.productName) results = results.filter(c => c.purchaseContent.productName.some(p => p.includes(activeFilters.productName)));
+        if (activeFilters.purchasingYear) results = results.filter(c => c.basicInfo.purchasingYear.includes(activeFilters.purchasingYear));
+        
+        if (activeFilters.amountOperator && activeFilters.amountMin) {
+            const min = parseFloat(activeFilters.amountMin);
+            const max = activeFilters.amountMax ? parseFloat(activeFilters.amountMax) : Infinity;
+            
+            results = results.filter(c => {
+                const amount = parseFloat(c.purchaseContent.amount.replace(/,/g, ''));
+                if (isNaN(amount)) return false;
+                
+                switch (activeFilters.amountOperator) {
+                    case 'gt': return amount > min;
+                    case 'lt': return amount < min;
+                    case 'between': return amount >= min && amount <= max;
+                    default: return true;
+                }
+            });
+        }
+
+        if (activeFilters.isBuyout?.length > 0) results = results.filter(c => activeFilters.isBuyout.includes(c.purchaseContent.isBuyout));
+        if (activeFilters.mode?.length > 0) results = results.filter(c => activeFilters.mode.includes(c.purchaseContent.mode));
+        if (activeFilters.attribute) results = results.filter(c => c.purchaseContent.attribute === activeFilters.attribute);
+        if (activeFilters.productName) results = results.filter(c => c.purchaseContent.productName.includes(activeFilters.productName));
 
         if (sortConfig) {
             results.sort((a, b) => {

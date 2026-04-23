@@ -95,6 +95,7 @@ const BusinessContractDetail: React.FC = () => {
                                                 <DetailItem label="業務" value={contract.basicInfo.salesperson} />
                                                 <DetailItem label="採購單位" value={contract.basicInfo.clientName} />
                                                 <DetailItem label="採購年份" value={contract.basicInfo.purchasingYear} />
+                                                <DetailItem label="類型" value={(contract.basicInfo.type || []).join(', ')} />
                                             </>
                                         )}
                                         {section.id === 'purchase-content' && (
@@ -111,8 +112,37 @@ const BusinessContractDetail: React.FC = () => {
                                                 <p className="text-gray-800 whitespace-pre-wrap">{contract.purchaseContent.remarks || '無備註'}</p>
                                             </div>
                                         )}
+                                        {section.id === 'maintenance-history' && (
+                                            <div className="col-span-2">
+                                                {(!contract.maintenanceHistory || contract.maintenanceHistory.length === 0) ? (
+                                                    <p className="text-gray-400 italic">尚無維護歷程</p>
+                                                ) : (
+                                                    <div className="space-y-4">
+                                                        {contract.maintenanceHistory.map((record, idx) => (
+                                                            <div key={idx} className="border-l-4 border-orange-400 bg-orange-50/30 p-4 rounded-r-lg">
+                                                                <div className="flex justify-between items-center mb-2">
+                                                                    <span className="font-bold text-gray-800">{record.userName} ({record.userId})</span>
+                                                                    <span className="text-sm text-gray-500">{record.timestamp}</span>
+                                                                </div>
+                                                                <ul className="space-y-1">
+                                                                    {record.changes.map((change, cIdx) => (
+                                                                        <li key={cIdx} className="text-sm text-gray-700">
+                                                                            <span className="font-medium">{change.field}:</span>{' '}
+                                                                            {change.oldValue !== null && (
+                                                                                <span className="text-red-500 line-through mr-1">{change.oldValue}</span>
+                                                                            )}
+                                                                            <span className="text-green-600 font-medium">➔ {change.newValue}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                         {/* 其他章節暫顯示 N/A 或依此類推 */}
-                                        {!['basic-info', 'purchase-content', 'remarks', 'scan-file'].includes(section.id) && (
+                                        {!['basic-info', 'purchase-content', 'remarks', 'scan-file', 'maintenance-history'].includes(section.id) && (
                                             <p className="text-gray-400 italic">尚無資料</p>
                                         )}
                                     </div>

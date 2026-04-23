@@ -1,13 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Upload, Save } from 'lucide-react';
 import { FloatingTOC, TagInput } from '@/components/common';
 import { Button } from '@/components/ui/Button';
+import { useParams } from 'react-router-dom';
+import { mockBusinessContracts } from '@/data/mockBusinessContracts';
 
 // 引入業務部設定檔
 import { tocSections, businessFieldConfig, businessValidationRules, fieldKeyToNameMap } from '@/features/business';
 
 // 引入型別
-import type { BusinessContractData, BusinessFormFieldConfig } from '@/features/business/types';
+import type { BusinessContractData, BusinessFormFieldConfig, MaintenanceRecord, ChangeDetail } from '@/features/business/types';
 // 引入自定義 Hook
 import { useContractForm } from '@/shared/hooks';
 import { useFormValidation } from '@/shared/hooks/useFormValidation';
@@ -21,7 +23,8 @@ const getInitialFormData = (): BusinessContractData => ({
         contractNo: '',
         salesperson: '',
         clientName: '',
-        purchasingYear: new Date().getFullYear().toString()
+        purchasingYear: new Date().getFullYear().toString(),
+        type: []
     },
     purchaseContent: {
         isBuyout: '否',
@@ -33,10 +36,13 @@ const getInitialFormData = (): BusinessContractData => ({
         amount: '',
         remarks: ''
     },
-    scanFile: null
+    scanFile: null,
+    maintenanceHistory: []
 });
 
 // --- 2. FormField 元件 ---
+// ... (FormField component remains the same, I'll skip re-writing it in the tool call if possible, but the instruction says 'complete content' for write_file, wait, I'm using replace)
+// I will include the FormField to be safe.
 interface FormFieldProps {
     field: BusinessFormFieldConfig;
     path: string;
@@ -148,6 +154,32 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
                     <TagInput value={value as string[]} onChange={(tags) => onChange(path, tags)} placeholder={placeholder} />
                 </div>
             );
+        case 'checkbox':
+            const checkboxValues = (value as string[]) || [];
+            return (
+                <div>
+                    {renderLabel()}
+                    <div className="flex items-center space-x-4 pt-2">
+                        {options?.map((opt) => (
+                            <label key={opt} className={`flex items-center ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+                                <input
+                                    type="checkbox"
+                                    checked={checkboxValues.includes(opt)}
+                                    onChange={(e) => {
+                                        const newValues = e.target.checked
+                                            ? [...checkboxValues, opt]
+                                            : checkboxValues.filter((v) => v !== opt);
+                                        onChange(path, newValues);
+                                    }}
+                                    className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    disabled={disabled}
+                                />
+                                <span className={`ml-2 text-sm ${disabled ? 'text-gray-400' : 'text-gray-700'}`}>{opt}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+            );
         case 'select-multiple':
             // 模擬從參數讀取的產品項目
             const productOptions = ['CEPS', 'CETD', 'SYMSKAN', 'ABC', 'PRO', 'AL', 'AE', 'CEPS生醫'];
@@ -184,14 +216,34 @@ const FormField: React.FC<FormFieldProps> = ({ field, path, value, onChange, isR
 
 // --- 3. 主元件 ---
 const BusinessContract: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const isEditMode = !!id;
+
     const {
         formData,
+        setFormData,
         message,
         showMessage,
         handleDynamicFormChange,
         getFieldValue,
         getFileName
     } = useContractForm<BusinessContractData>(getInitialFormData());
+
+    const [originalData, setOriginalData] = useState<BusinessContractData | null>(null);
+
+    // Load data for Edit Mode
+    useEffect(() => {
+        if (id) {
+            const foundContract = mockBusinessContracts.find(c => c.id === id);
+            if (foundContract) {
+                const loadedData = JSON.parse(JSON.stringify(foundContract));
+                setFormData(loadedData);
+                setOriginalData(JSON.parse(JSON.stringify(foundContract)));
+            } else {
+                showMessage('找不到指定的業務合約資料', 'error');
+            }
+        }
+    }, [id, setFormData, showMessage]);
 
     const {
         validationErrors,
@@ -236,8 +288,63 @@ const BusinessContract: React.FC = () => {
             showMessage('請檢查必填欄位。', 'error');
             return;
         }
-        console.log('Business Contract Submitting:', formData);
-        showMessage('業務合約資料已儲存！ (模擬)');
+
+        // --- 產生維護紀錄 ---
+        const now = new Date();
+        const timestamp = now.getFullYear() + '-' + 
+            String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+            String(now.getDate()).padStart(2, '0') + ' ' + 
+            String(now.getHours()).padStart(2, '0') + ':' + 
+            String(now.getMinutes()).padStart(2, '0') + ':' + 
+            String(now.getSeconds()).padStart(2, '0');
+
+        const newRecord: MaintenanceRecord = {
+            timestamp,
+            userId: 'Current_User_ID', // 實際應從 AuthContext 取得
+            userName: '當前使用者',
+            changes: []
+        };
+
+        if (!isEditMode) {
+            newRecord.changes.push({
+                field: '合約建檔',
+                oldValue: null,
+                newValue: '初始資料建檔'
+            });
+        } else if (originalData) {
+            // 比較變更
+            Object.keys(fieldKeyToNameMap).forEach(path => {
+                const oldValue = getFieldValue(originalData, path);
+                const newValue = getFieldValue(formData, path);
+                
+                // 簡單比較，對於陣列(如產品項目)需要特殊處理
+                const isDifferent = Array.isArray(oldValue) 
+                    ? JSON.stringify([...oldValue].sort()) !== JSON.stringify([...(newValue || [])].sort())
+                    : oldValue !== newValue;
+
+                if (isDifferent) {
+                    newRecord.changes.push({
+                        field: fieldKeyToNameMap[path],
+                        oldValue: oldValue === null || oldValue === undefined || oldValue === '' ? '(無)' : String(oldValue),
+                        newValue: newValue === null || newValue === undefined || newValue === '' ? '(無)' : String(newValue)
+                    });
+                }
+            });
+        }
+
+        const updatedFormData = {
+            ...formData,
+            maintenanceHistory: [newRecord, ...(formData.maintenanceHistory || [])]
+        };
+
+        console.log('Business Contract Submitting with History:', updatedFormData);
+        showMessage(isEditMode ? '業務合約資料已更新，並留下修改紀錄！' : '業務合約資料已儲存，並建立初始紀錄！');
+        
+        // 如果是編輯模式，更新 originalData 避免重複觸發
+        if (isEditMode) {
+            setOriginalData(JSON.parse(JSON.stringify(updatedFormData)));
+            setFormData(updatedFormData);
+        }
     };
 
     return (
@@ -247,7 +354,7 @@ const BusinessContract: React.FC = () => {
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8 bg-white rounded-xl shadow-sm border border-orange-100 overflow-hidden">
                     <div className="p-6 border-b border-orange-100 bg-orange-50/50">
-                        <h2 className="text-2xl font-bold text-gray-800">新增業務合約</h2>
+                        <h2 className="text-2xl font-bold text-gray-800">{isEditMode ? '維護業務合約' : '新增業務合約'}</h2>
                         <p className="text-sm text-gray-500 mt-1">請填寫下方合約資訊，標註星號為必填項目。</p>
                     </div>
                 </div>

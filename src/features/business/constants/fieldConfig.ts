@@ -7,6 +7,7 @@ export const businessFieldConfig: { [key: string]: BusinessFormFieldConfig[] } =
         { id: 'salesperson', label: '業務', type: 'text' },
         { id: 'clientName', label: '採購單位', type: 'text', fullWidth: true },
         { id: 'purchasingYear', label: '採購年份', type: 'text', placeholder: '例: 2024' },
+        { id: 'type', label: '類型', type: 'checkbox', options: ['合約', '報價單'] },
     ],
     'purchase-content': [
         { id: 'mode', label: '採購模式', type: 'select', options: ['單家', '聯採'] },

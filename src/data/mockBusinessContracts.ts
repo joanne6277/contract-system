@@ -9,7 +9,8 @@ export const mockBusinessContracts: BusinessContract[] = [
             contractNo: 'CON-2024-001',
             salesperson: '張小明',
             clientName: '國立臺灣大學',
-            purchasingYear: '2024'
+            purchasingYear: '2024',
+            type: ['合約']
         },
         purchaseContent: {
             isBuyout: '否',
@@ -21,7 +22,17 @@ export const mockBusinessContracts: BusinessContract[] = [
             amount: '500,000',
             remarks: '年度續約'
         },
-        createdAt: new Date('2024-01-01')
+        createdAt: new Date('2024-01-01'),
+        maintenanceHistory: [
+            {
+                timestamp: '2024-01-01 10:00:00',
+                userId: 'Admin001',
+                userName: '系統管理員',
+                changes: [
+                    { field: '合約建檔', oldValue: null, newValue: '初始資料建檔' }
+                ]
+            }
+        ]
     },
     {
         id: 'B002',
@@ -31,7 +42,8 @@ export const mockBusinessContracts: BusinessContract[] = [
             contractNo: 'CON-2024-002',
             salesperson: '李美華',
             clientName: '臺北市立圖書館',
-            purchasingYear: '2024'
+            purchasingYear: '2024',
+            type: ['合約']
         },
         purchaseContent: {
             isBuyout: '否',
@@ -43,7 +55,17 @@ export const mockBusinessContracts: BusinessContract[] = [
             amount: '1,200,000',
             remarks: '三年專案第一年'
         },
-        createdAt: new Date('2024-02-01')
+        createdAt: new Date('2024-02-01'),
+        maintenanceHistory: [
+            {
+                timestamp: '2024-02-01 14:30:00',
+                userId: 'Admin001',
+                userName: '系統管理員',
+                changes: [
+                    { field: '合約建檔', oldValue: null, newValue: '初始資料建檔' }
+                ]
+            }
+        ]
     },
     {
         id: 'B003',
@@ -53,7 +75,8 @@ export const mockBusinessContracts: BusinessContract[] = [
             contractNo: 'CON-2023-088',
             salesperson: '王大同',
             clientName: '臺北榮民總醫院',
-            purchasingYear: '2023'
+            purchasingYear: '2023',
+            type: ['合約']
         },
         purchaseContent: {
             isBuyout: '否',
@@ -65,7 +88,17 @@ export const mockBusinessContracts: BusinessContract[] = [
             amount: '850,000',
             remarks: ''
         },
-        createdAt: new Date('2023-06-01')
+        createdAt: new Date('2023-06-01'),
+        maintenanceHistory: [
+            {
+                timestamp: '2023-06-01 11:20:00',
+                userId: 'Admin001',
+                userName: '系統管理員',
+                changes: [
+                    { field: '合約建檔', oldValue: null, newValue: '初始資料建檔' }
+                ]
+            }
+        ]
     },
     {
         id: 'B004',
@@ -75,7 +108,8 @@ export const mockBusinessContracts: BusinessContract[] = [
             contractNo: 'CON-2024-045',
             salesperson: '張小明',
             clientName: '國立成功大學',
-            purchasingYear: '2024'
+            purchasingYear: '2024',
+            type: ['合約']
         },
         purchaseContent: {
             isBuyout: '否',
@@ -87,7 +121,17 @@ export const mockBusinessContracts: BusinessContract[] = [
             amount: '300,000',
             remarks: ''
         },
-        createdAt: new Date('2024-03-15')
+        createdAt: new Date('2024-03-15'),
+        maintenanceHistory: [
+            {
+                timestamp: '2024-03-15 16:45:00',
+                userId: 'Admin001',
+                userName: '系統管理員',
+                changes: [
+                    { field: '合約建檔', oldValue: null, newValue: '初始資料建檔' }
+                ]
+            }
+        ]
     },
     {
         id: 'B005',
@@ -97,7 +141,8 @@ export const mockBusinessContracts: BusinessContract[] = [
             contractNo: 'CON-2024-115',
             salesperson: '李美華',
             clientName: '國家圖書館',
-            purchasingYear: '2024'
+            purchasingYear: '2024',
+            type: ['合約', '報價單']
         },
         purchaseContent: {
             isBuyout: '是',
@@ -109,6 +154,16 @@ export const mockBusinessContracts: BusinessContract[] = [
             amount: '2,500,000',
             remarks: '永久授權買斷專案'
         },
-        createdAt: new Date('2024-05-01')
+        createdAt: new Date('2024-05-01'),
+        maintenanceHistory: [
+            {
+                timestamp: '2024-05-01 09:15:00',
+                userId: 'Admin001',
+                userName: '系統管理員',
+                changes: [
+                    { field: '合約建檔', oldValue: null, newValue: '初始資料建檔' }
+                ]
+            }
+        ]
     }
 ];
